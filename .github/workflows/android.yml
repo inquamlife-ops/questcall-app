@@ -1,0 +1,75 @@
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - 'android/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'capacitor.config.json'
+      - '.github/workflows/android.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: android-apk
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+          cache: gradle
+
+      - name: Install Capacitor
+        run: npm ci
+
+      - name: Copy web app into Android project
+        run: npx cap sync android
+
+      # 서명키: 저장소 Settings → Secrets and variables → Actions 의 QC_KEYSTORE_B64 / QC_KEYSTORE_PASS
+      - name: Prepare signing key
+        env:
+          KS_B64: ${{ secrets.QC_KEYSTORE_B64 }}
+        run: |
+          if [ -n "$KS_B64" ]; then
+            echo "$KS_B64" | base64 -d > "$RUNNER_TEMP/questcall.p12"
+            echo "QC_KEYSTORE=$RUNNER_TEMP/questcall.p12" >> "$GITHUB_ENV"
+            echo "::notice::Signing with the release key"
+          else
+            echo "::warning::QC_KEYSTORE_B64 is not set. Signing with a temporary debug key; updates will need uninstall + reinstall."
+          fi
+
+      - name: Build APK
+        working-directory: android
+        env:
+          QC_KEYSTORE_PASS: ${{ secrets.QC_KEYSTORE_PASS }}
+          QC_VERSION_CODE: ${{ github.run_number }}
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleRelease
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release.apk questcall.apk
+          gh release create "v1.0.${{ github.run_number }}" questcall.apk \
+            --title "퀘스트콜 1.0.${{ github.run_number }}" \
+            --notes "자동 빌드 · ${{ github.sha }}" \
+            --latest

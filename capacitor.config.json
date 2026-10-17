@@ -1,0 +1,6 @@
+{
+  "appId": "com.inquamlife.questcall",
+  "appName": "퀘스트콜",
+  "webDir": "docs",
+  "android": { "allowMixedContent": false }
+}

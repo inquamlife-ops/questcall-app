@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">퀘스트콜</string>
+    <string name="title_activity_main">퀘스트콜</string>
+    <string name="package_name">com.inquamlife.questcall</string>
+    <string name="custom_url_scheme">com.inquamlife.questcall</string>
+</resources>

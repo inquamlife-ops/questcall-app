@@ -1,0 +1,29 @@
+{
+  "name": "퀘스트콜",
+  "short_name": "퀘스트콜",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f0eeff",
+  "theme_color": "#ffcd38",
+  "description": "모닝콜로 불려 나가 오늘의 퀘스트를 깨는 RPG 습관 앱",
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "icons/maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
