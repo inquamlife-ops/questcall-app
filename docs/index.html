@@ -152,6 +152,7 @@ main { flex: 1; padding-block: 8px calc(96px + env(safe-area-inset-bottom, 0px))
 .goalbar s { position: absolute; top: -4px; width: 3px; height: 14px; background: var(--edge); border-radius: 2px; transform: translateX(-1px); }
 .g-routines { display: flex; flex-wrap: wrap; gap: 4px; }
 .rrow { display: flex; align-items: center; gap: 10px; background: var(--card); border: 2px solid var(--edge); border-radius: 14px; padding: 9px 10px 9px 12px; }
+.rrow.paused { opacity: .6; border-style: dashed; }
 .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; background: var(--c, var(--dim)); border: 2px solid var(--edge); }
 
 /* 지도 */
@@ -1606,8 +1607,9 @@ function renderGoals() {
   h += '<section class="sec"><div class="sec-h"><h2>루틴 관리</h2></div><div class="list">';
   for (const r of q.routines) {
     const g = r.goalId ? goalOf(r.goalId) : null;
-    h += `<div class="rrow" style="--c:var(--${r.stat})"><span class="dot"></span><div class="grow"><b>${esc(r.title)}</b> <span class="sub num">${r.time} · ${r.days.length === 7 ? '매일' : r.days.map((d) => WEEKDAY[d]).join('')} · ${MODE_NAME[r.mode]}</span>
-      <div class="sub">${TIER_NAME[r.tier]} 단계: ${esc(tierInfo(r, r.tier).title)}${g ? ` · ${esc(g.title)}` : ''}</div></div><button class="btn xs ghost" data-qact="del" data-r="${r.id}">삭제</button></div>`;
+    h += `<div class="rrow ${r.active ? '' : 'paused'}" style="--c:var(--${r.stat})"><span class="dot"></span><div class="grow"><b>${esc(r.title)}</b>${r.active ? '' : ' <span class="tag">쉬는 중</span>'} <span class="sub num">${r.time} · ${r.days.length === 7 ? '매일' : r.days.map((d) => WEEKDAY[d]).join('')} · ${MODE_NAME[r.mode]}</span>
+      <div class="sub">${TIER_NAME[r.tier]} 단계: ${esc(tierInfo(r, r.tier).title)}${g ? ` · ${esc(g.title)}` : ''}</div></div>
+      <div class="qbtns"><button class="btn xs" data-qact="edit" data-r="${r.id}">수정</button><button class="btn xs ghost" data-qact="del" data-r="${r.id}">삭제</button></div></div>`;
   }
   if (!q.routines.length) h += '<div class="empty">루틴이 없어요.</div>';
   h += '</div></section>';
@@ -1761,6 +1763,66 @@ function createRoutine() {
   ensureDay(q, today); save(); closeModal(); render(); toast(`'${title}' 루틴을 만들었어요`);
 }
 
+// ===== 루틴 수정 =====
+function openEditRoutine(r) {
+  const g = r.goalId ? goalOf(r.goalId) : null;
+  const chips = WEEKDAY.map((d, k) => `<label class="dchip"><input type="checkbox" name="day" value="${k}" ${r.days.includes(k) ? 'checked' : ''}><span>${d}</span></label>`).join('');
+  const tierRow = (t) => { const ti = tierInfo(r, t); return `<div class="row"><label class="fld grow">${TIER_NAME[t]}<input id="efT${t}" class="inp" required maxlength="40" value="${esc(ti.title)}"></label>
+    <label class="fld" style="width:84px">분<input id="efM${t}" class="inp" type="number" min="1" max="240" value="${ti.minutes || r.minutes || 10}"></label></div>`; };
+  openModal(`<form id="editForm" class="list" data-r="${r.id}">
+    <div class="big">루틴 수정</div>
+    <label class="fld">루틴 이름<input id="efTitle" class="inp" required maxlength="20" value="${esc(r.title)}"></label>
+    <div class="row"><label class="fld grow">모닝콜 시간<input id="efTime" class="inp" type="time" value="${r.time}" required></label>
+      <label class="fld grow">올릴 능력치<select id="efStat" class="inp">${['str', 'int', 'vit', 'dex'].map((k) => `<option value="${k}" ${k === r.stat ? 'selected' : ''}>${STAT[k].name} (${STAT[k].code})</option>`).join('')}</select></label></div>
+    <div class="fld">반복 요일<div class="dchips">${chips}</div></div>
+    <div class="row"><label class="fld grow">인증 방식<select id="efMode" class="inp"><option value="TIMER" ${r.mode === 'TIMER' ? 'selected' : ''}>타이머</option><option value="HOLD" ${r.mode === 'HOLD' ? 'selected' : ''}>꾹 누르기 (단발 행동)</option></select></label>
+      <label class="fld grow">지금 단계<select id="efTier" class="inp">${[1, 2, 3].map((t) => `<option value="${t}" ${t === r.tier ? 'selected' : ''}>${TIER_NAME[t]}</option>`).join('')}</select></label></div>
+    <div class="fld">단계별 할 일과 타이머 시간${tierRow(1)}${tierRow(2)}${tierRow(3)}</div>
+    ${g ? `<div class="card list"><div class="eyebrow">연결된 목표</div>
+      <label class="fld">목표 이름<input id="efGTitle" class="inp" required maxlength="40" value="${esc(g.title)}"></label>
+      <div class="row"><label class="fld grow">목표 총량 (${g.unit})<input id="efGTotal" class="inp" type="number" min="1" value="${g.total}"></label>
+        <div class="fld grow">지금까지<b class="num" style="color:var(--fg);font-size:15px">${fmtAmt(goalDone(Q(), g))}${g.unit}</b></div></div>
+      <div class="seg"><label><input type="radio" name="efBreak" value="ESCALATION" ${g.mode !== 'FLAT' ? 'checked' : ''}><span>스몰스텝<small>처음엔 적게, 점점 늘림</small></span></label>
+        <label><input type="radio" name="efBreak" value="FLAT" ${g.mode === 'FLAT' ? 'checked' : ''}><span>균등<small>매번 같은 양</small></span></label></div>
+      <div class="sub">단위와 기간(${g.start} ~ ${g.end})은 지난 기록과 맞아야 해서 바꿀 수 없어요. 바꾸려면 새 루틴·목표를 만들어 주세요.</div></div>` : ''}
+    <label class="switch"><input type="checkbox" id="efActive" ${r.active ? 'checked' : ''}><span>루틴 켜기 (끄면 오늘의 퀘스트와 모닝콜이 쉬어요)</span></label>
+    <div class="sub" id="efMsg"></div>
+    <button class="btn pri">저장</button><button type="button" class="btn ghost" data-qact="closeexec">닫기</button></form>`);
+}
+function saveRoutineEdit(r) {
+  const q = Q(), today = q.today, ws = weekStartOf(today);
+  const days = [...document.querySelectorAll('#editForm input[name=day]:checked')].map((i) => +i.value);
+  if (!days.length) { $('efMsg').textContent = '요일을 하나 이상 골라주세요.'; return; }
+  const before = JSON.stringify({ d: r.days, a: r.active });
+  r.title = $('efTitle').value.trim() || r.title;
+  r.time = $('efTime').value || r.time;
+  r.stat = $('efStat').value;
+  r.mode = $('efMode').value;
+  r.days = days.sort();
+  r.active = $('efActive').checked;
+  r.tiers = [1, 2, 3].map((t) => ({ title: $('efT' + t).value.trim() || tierInfo(r, t).title, minutes: Math.max(1, Math.min(240, +$('efM' + t).value || 10)) }));
+  r.minutes = r.tiers[0].minutes;
+  const nt = +$('efTier').value;
+  if (nt !== r.tier) setTier(q, r, nt);
+  let replan = before !== JSON.stringify({ d: r.days, a: r.active });
+  const g = r.goalId ? goalOf(r.goalId) : null;
+  if (g) {
+    const total = Math.max(1, Math.round(+$('efGTotal').value || g.total)), mode = document.querySelector('#editForm input[name=efBreak]:checked').value;
+    if (total !== g.total || mode !== g.mode) replan = true;
+    g.title = $('efGTitle').value.trim() || g.title; g.total = total; g.mode = mode;
+  }
+  // 오늘 쉬는 날이 됐으면 오늘 할 일에서 빼고, 새로 해야 하는 날이 됐으면 만든다
+  const tx = q.quests.find((x) => x.rid === r.id && x.date === today && x.status === 'todo');
+  if (tx && (!r.active || !r.days.includes(dow(today)))) q.quests = q.quests.filter((x) => x !== tx);
+  // 분량 다시 계산: 이번 주부터의 주간 계획을 지우고 오늘 남은 퀘스트 분량을 새로 맞춤
+  if (g && replan) {
+    for (const k of Object.keys(q.plans)) if (k.startsWith(g.id + '@') && k.split('@')[1] >= ws) delete q.plans[k];
+    for (const x of q.quests) if (x.goalId === g.id && x.date === today && x.status === 'todo') { const p = planWeek(q, g, ws); x.amount = p.perDay || x.amount; }
+  }
+  ensureDay(q, today);
+  q.example = false; save(); closeModal(); render(); toast(`'${r.title}' 루틴을 저장했어요`);
+}
+
 // ===== 아이콘 =====
 const QICON = {
   phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
@@ -1803,6 +1865,7 @@ document.addEventListener('submit', (ev) => {
   ev.preventDefault();
   const q = Q();
   if (ev.target.id === 'newForm') createRoutine();
+  if (ev.target.id === 'editForm') { const r = routineOf(ev.target.dataset.r); if (r) saveRoutineEdit(r); }
   if (ev.target.id === 'subForm') {
     const t = $('subIn').value.trim(); if (!t) return;
     q.subs.push({ id: 's' + Date.now().toString(36), title: t, done: false, created: q.today });
@@ -1863,6 +1926,7 @@ document.addEventListener('click', (ev) => {
       save(); render(); break;
     }
     case 'new': openNewRoutine(); break;
+    case 'edit': if (r) openEditRoutine(r); break;
     case 'preset': applyPreset(d.p); break;
     case 'testring': ringBurst(); break;
     case 'buyrw': {
@@ -2089,7 +2153,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 
 <script>
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform())) {
-  navigator.serviceWorker.register('sw.js?v=368d9846e0').catch(function () {});
+  navigator.serviceWorker.register('sw.js?v=2665e483c9').catch(function () {});
 }
 </script>
 </body></html>
