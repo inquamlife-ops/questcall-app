@@ -1597,7 +1597,8 @@ function renderGoals() {
       ${mo ? `<div class="lvl"><span class="lv-k">${mo.month}월</span><div class="grow">${bar(mo.prog, mo.target)}</div><span class="num lv-v">${fmtAmt(mo.prog)} / ${fmtAmt(mo.target)}${g.unit}</span></div>` : ''}
       <div class="lvl"><span class="lv-k">이번 주</span><div class="grow">${bar(w.prog, p.target)}</div><span class="num lv-v">${fmtAmt(w.prog)} / ${fmtAmt(p.target)}${g.unit}</span></div>
       <div class="sub num">하루 ${fmtAmt(p.perDay)}${g.unit} × ${p.days}번 · 기간 ${el}/${total}일째. 1년 막대의 세로선은 똑같이 나눴을 때 지금쯤 와야 할 위치예요${g.mode === 'FLAT' ? '' : '(처음 6주는 일부러 적게 시작해요)'}.</div>
-      <div class="g-routines">${rs.map((r) => `<span class="tag tstat">${r.time} ${esc(r.title)}</span>`).join('')}</div>
+      <div class="row"><div class="g-routines grow">${rs.map((r) => `<span class="tag tstat">${r.time} ${esc(r.title)}</span>`).join('')}</div>
+        <button class="btn xs" data-qact="gedit" data-g="${g.id}">수정</button><button class="btn xs ghost" data-qact="gdel" data-g="${g.id}">삭제</button></div>
       ${w.complete && !w.claimed ? `<button class="btn pri" data-qact="weekly" data-g="${g.id}">이번 주 퀘스트 달성! 보상 받기 (EXP +${WEEKLY_REWARD.exp} · 골드 +${WEEKLY_REWARD.gold} · 입장권 +${WEEKLY_REWARD.tickets})</button>`
         : w.claimed ? '<div class="sub okc">이번 주 보상을 받았어요</div>' : `<div class="sub">이번 주 분량을 채우면 EXP +${WEEKLY_REWARD.exp} · 골드 +${WEEKLY_REWARD.gold} · 입장권 +${WEEKLY_REWARD.tickets}</div>`}
       ${p.behind ? `<div class="warn">밀린 양이 많아서 하루 분량을 원래 속도의 ${OVERLOAD}배로 묶었어요.</div><button class="btn sm" data-qact="adjust" data-g="${g.id}">남은 기간에 맞게 목표 낮추기</button>` : ''}
@@ -1823,6 +1824,63 @@ function saveRoutineEdit(r) {
   q.example = false; save(); closeModal(); render(); toast(`'${r.title}' 루틴을 저장했어요`);
 }
 
+// ===== 목표 수정·삭제 =====
+function openEditGoal(g) {
+  const q = Q(), rs = q.routines.filter((r) => r.goalId === g.id), minEnd = q.today > g.start ? q.today : g.start;
+  openModal(`<form id="goalForm" class="list" data-g="${g.id}">
+    <div class="big">목표 수정</div>
+    <label class="fld">목표 이름<input id="gfTitle" class="inp" required maxlength="40" value="${esc(g.title)}"></label>
+    <div class="row"><label class="fld grow">목표 총량 (${g.unit})<input id="gfTotal" class="inp" type="number" min="1" value="${g.total}" required></label>
+      <div class="fld grow">지금까지<b class="num" style="color:var(--fg);font-size:15px">${fmtAmt(goalDone(q, g))}${g.unit}</b></div></div>
+    <div class="row"><div class="fld grow">시작일<b class="num" style="color:var(--fg);font-size:15px">${g.start}</b></div>
+      <label class="fld grow">마감일<input id="gfEnd" class="inp" type="date" min="${minEnd}" value="${g.end}" required></label></div>
+    <label class="fld">색깔 (능력치)<select id="gfStat" class="inp">${['str', 'int', 'vit', 'dex'].map((k) => `<option value="${k}" ${k === g.stat ? 'selected' : ''}>${STAT[k].name} (${STAT[k].code})</option>`).join('')}</select></label>
+    <div class="seg"><label><input type="radio" name="gfBreak" value="ESCALATION" ${g.mode !== 'FLAT' ? 'checked' : ''}><span>스몰스텝<small>처음엔 적게, 점점 늘림</small></span></label>
+      <label><input type="radio" name="gfBreak" value="FLAT" ${g.mode === 'FLAT' ? 'checked' : ''}><span>균등<small>매번 같은 양</small></span></label></div>
+    <div class="sub">연결된 루틴: ${rs.length ? rs.map((r) => esc(r.title)).join(', ') : '없음'}. 단위(${g.unit})와 시작일은 지난 기록과 맞아야 해서 바꿀 수 없어요. 총량·마감일·방식을 바꾸면 이번 주부터 분량을 다시 계산해요.</div>
+    <div class="sub" id="gfMsg"></div>
+    <button class="btn pri">저장</button><button type="button" class="btn ghost" data-qact="closeexec">닫기</button></form>`);
+}
+function replanGoal(q, g) {
+  const ws = weekStartOf(q.today);
+  for (const k of Object.keys(q.plans)) if (k.startsWith(g.id + '@') && k.split('@')[1] >= ws) delete q.plans[k];
+  const p = planWeek(q, g, ws);
+  for (const x of q.quests) if (x.goalId === g.id && x.date === q.today && x.status === 'todo') x.amount = p.perDay || x.amount;
+}
+function saveGoalEdit(g) {
+  const q = Q(), end = $('gfEnd').value;
+  if (!end || end < g.start || end < q.today) { $('gfMsg').textContent = '마감일은 오늘이나 그 뒤로 골라주세요.'; return; }
+  const total = Math.max(1, Math.round(+$('gfTotal').value || g.total)), mode = document.querySelector('#goalForm input[name=gfBreak]:checked').value;
+  const replan = total !== g.total || mode !== g.mode || end !== g.end;
+  g.title = $('gfTitle').value.trim() || g.title; g.total = total; g.mode = mode; g.end = end; g.stat = $('gfStat').value;
+  if (replan) replanGoal(q, g);
+  ensureDay(q, q.today);
+  q.example = false; save(); closeModal(); render(); toast(`'${g.title}' 목표를 저장했어요`);
+}
+function openDeleteGoal(g) {
+  const rs = Q().routines.filter((r) => r.goalId === g.id);
+  openModal(`<div class="list"><div class="big">목표 삭제</div>
+    <div><b>${esc(g.title)}</b></div>
+    <div class="sub">연결된 루틴: ${rs.length ? rs.map((r) => esc(r.title)).join(', ') : '없음'}. 이미 받은 EXP·능력치·골드는 그대로 남아요.</div>
+    ${rs.length ? `<button class="btn" data-qact="gdelkeep" data-g="${g.id}">목표만 삭제<small class="sub"> · 루틴은 분량 없이 계속</small></button>` : ''}
+    <button class="btn" style="color:var(--danger)" data-qact="gdelall" data-g="${g.id}">${rs.length ? '목표와 연결된 루틴까지 삭제' : '목표 삭제'}</button>
+    <button class="btn ghost" data-qact="closeexec">취소</button></div>`);
+}
+function deleteGoal(q, g, withRoutines) {
+  const rids = new Set(q.routines.filter((r) => r.goalId === g.id).map((r) => r.id));
+  if (withRoutines) {
+    q.routines = q.routines.filter((r) => !rids.has(r.id));
+    q.quests = q.quests.filter((x) => !(rids.has(x.rid) && x.status === 'todo'));
+  } else {
+    for (const r of q.routines) if (rids.has(r.id)) r.goalId = null;
+    // 오늘 남은 퀘스트는 분량 없는 일반 루틴 퀘스트로 바꿈 (끝난 기록은 그대로 둠)
+    for (const x of q.quests) if (x.goalId === g.id && x.status === 'todo') { const r = routineOf(x.rid); x.goalId = null; x.amount = (r && r.amount) || 1; x.unit = (r && r.unit) || '회'; }
+  }
+  for (const k of Object.keys(q.plans)) if (k.startsWith(g.id + '@')) delete q.plans[k];
+  q.goals = q.goals.filter((y) => y !== g);
+  q.example = false; save(); closeModal(); render(); toast(`'${g.title}' 목표를 삭제했어요`);
+}
+
 // ===== 아이콘 =====
 const QICON = {
   phone: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2"/></svg>',
@@ -1866,6 +1924,7 @@ document.addEventListener('submit', (ev) => {
   const q = Q();
   if (ev.target.id === 'newForm') createRoutine();
   if (ev.target.id === 'editForm') { const r = routineOf(ev.target.dataset.r); if (r) saveRoutineEdit(r); }
+  if (ev.target.id === 'goalForm') { const g = goalOf(ev.target.dataset.g); if (g) saveGoalEdit(g); }
   if (ev.target.id === 'subForm') {
     const t = $('subIn').value.trim(); if (!t) return;
     q.subs.push({ id: 's' + Date.now().toString(36), title: t, done: false, created: q.today });
@@ -1927,6 +1986,9 @@ document.addEventListener('click', (ev) => {
     }
     case 'new': openNewRoutine(); break;
     case 'edit': if (r) openEditRoutine(r); break;
+    case 'gedit': { const g = goalOf(d.g); if (g) openEditGoal(g); break; }
+    case 'gdel': { const g = goalOf(d.g); if (g) openDeleteGoal(g); break; }
+    case 'gdelkeep': case 'gdelall': { const g = goalOf(d.g); if (g) deleteGoal(q, g, d.qact === 'gdelall'); break; }
     case 'preset': applyPreset(d.p); break;
     case 'testring': ringBurst(); break;
     case 'buyrw': {
@@ -2153,7 +2215,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 
 <script>
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform())) {
-  navigator.serviceWorker.register('sw.js?v=2665e483c9').catch(function () {});
+  navigator.serviceWorker.register('sw.js?v=cedc1cd628').catch(function () {});
 }
 </script>
 </body></html>
