@@ -57,7 +57,12 @@ h2 { font-size: 20px; } h3 { font-size: 17px; line-height: 1.3; }
 .pava svg { width: 100%; height: 100%; display: block; }
 .prow { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
 .lv { font-family: var(--font-display); font-size: 22px; line-height: 1; }
-.ptitle { font-weight: 700; font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ptitle { font-weight: 700; font-size: 11px; color: var(--dim); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 0 1 auto; min-width: 0; }
+.pname { font: inherit; font-weight: 800; font-size: 15px; color: var(--fg); background: none; border: 0; padding: 0; display: inline-flex; align-items: center; gap: 3px; min-width: 0; flex: 0 1 auto; cursor: pointer; }
+.pname span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.pname svg { width: 12px; height: 12px; flex: none; color: var(--dim); }
+.btn.lockd { display: inline-flex; align-items: center; gap: 3px; background: color-mix(in srgb, var(--accent) 50%, var(--card)); }
+.btn.lockd svg { width: 13px; height: 13px; }
 .bar { height: 8px; background: var(--card2); border: 1.5px solid var(--edge); border-radius: 99px; overflow: hidden; }
 .bar > i { display: block; height: 100%; background: var(--c, var(--accent)); border-radius: 99px; transition: width .35s; }
 .bar.xp { margin-top: 5px; } .bar.xp > i { background: var(--accent); }
@@ -320,7 +325,7 @@ textarea.inp { min-height: 76px; resize: vertical; font-size: 12px; font-family:
     <div class="player">
       <div class="pava" id="hAva"></div>
       <div class="grow">
-        <div class="prow"><span class="lv num" id="hLv">Lv.1</span><span class="ptitle" id="hTitle">꾸준함의 모험가</span></div>
+        <div class="prow"><span class="lv num" id="hLv">Lv.1</span><button class="pname" id="hName" data-act="nick" aria-label="닉네임 바꾸기">모험가</button><span class="ptitle" id="hTitle">꾸준함의 모험가</span></div>
         <div class="bar xp"><i id="hExp" style="width:0"></i></div>
         <div class="exptxt num"><span id="hCls">견습 모험가</span> · <span id="hExpT">0 / 100 EXP</span></div>
       </div>
@@ -484,7 +489,7 @@ const SKILLS = {
   giant: { cat: 'str', name: '거인 사냥꾼', max: 2, ai: (b) => (b.tile.type === 'boss' ? 8 : 4), txt: (m) => `골렘·보스에게 피해 +${pct(0.5 * m)}`, on: (b, m) => { b.cs.giant += 0.5 * m; } },
   surge: { cat: 'int', name: '파동 증폭', max: 3, ai: 8, txt: (m) => `지혜의 파동 피해 +${pct(0.6 * m)}`, on: (b, m) => { b.cs.wave *= 1 + 0.6 * m; } },
   haste: { cat: 'int', name: '파동 가속', max: 2, ai: 7, txt: (m) => `지혜의 파동 재사용 ${pct(0.3 * m)} 단축`, on: (b, m) => { b.cs.waveCd *= 1 - 0.3 * m; } },
-  chain: { cat: 'int', name: '번개 사슬', max: 2, ai: 6.5, txt: (m) => `궁수 화살까지, 명중 시 ${pct(0.2 * m)} 확률로 옆 적에게 번개`, on: (b, m) => { b.cs.chain += 0.2 * m; } },
+  chain: { cat: 'int', name: '번개 사슬', max: 2, ai: 6.5, txt: (m) => `동료 공격까지, 명중 시 ${pct(0.2 * m)} 확률로 옆 적에게 번개`, on: (b, m) => { b.cs.chain += 0.2 * m; } },
   frost: { cat: 'int', name: '서리 파동', max: 1, ai: 9.5, txt: (m) => `파동에 맞은 적이 2초 동안 ${pct(0.3 * m)} 느려짐`, on: (b, m) => { b.cs.frost = 0.3 * m; } },
   rapid: { cat: 'dex', name: '속사', max: 3, ai: 7.5, txt: (m) => `연사 속도 +${pct(0.2 * m)}`, on: (b, m) => { b.cs.rate *= 1 + 0.2 * m; } },
   diag: { cat: 'dex', name: '사선 화살', max: 2, ai: 10, txt: (m) => `양옆 대각선으로 화살 2발 추가 (피해 ${pct(0.35 * m)})`, on: (b, m) => { b.cs.diag++; b.cs.diagDm = 0.35 * m; } },
@@ -519,7 +524,9 @@ function startPick(b) {
 }
 function nextWave(b) { b.wv++; b.wt = 0; b.lastSpawn = 0; b.wave = b.wv + 1; }
 
-// ===== 숫자 게이트 (Last War식): 웨이브마다 좌우 게이트 한 쌍이 내려오고, 영웅이 지나간 쪽이 동료 궁수 수를 바꿈 =====
+// ===== 숫자 게이트 (Last War식): 웨이브마다 좌우 게이트 한 쌍이 내려오고, 영웅이 지나간 쪽이 동료 수를 바꿈 =====
+// 동료는 직업에 따라 모습·공격 모양만 다름 (수치는 모두 같음)
+const CLASS_UNIT = { novice: '견습생', berserker: '전사', archmage: '마법사', guardian: '프리스트', ranger: '궁수' };
 const SQUAD_START = 1, SQUAD_MAX = 8, ALLY_DMG = 0.3, GATE_T = 2.2, GATE_SPD = 72, GATE_Y = HERO_Y - 20;
 function gateApply(n, gt) { return clamp(gt.op === '+' ? n + gt.n : gt.op === 'x' ? n * gt.n : n - gt.n, 0, SQUAD_MAX); }
 function gateText(gt) { return (gt.op === '+' ? '+' : gt.op === 'x' ? '×' : '−') + gt.n; }
@@ -556,7 +563,7 @@ function newBattle(p, tile, seed, auto, opt) {
     tile, seed, rng, cs, list: wv.list, nW: wv.nW, sc: tileScale(tile.i), elite: tile.type === 'gate' ? 1.3 : 1,
     idx: 0, t: 0, wt: 0, wv: -1, lastSpawn: 0, wall: cs.wall, wallMax: cs.wall, hx: W / 2, inputX: null, auto: auto !== false,
     cd: 0, waveT: cs.waveCd * 0.6, enemies: [], bullets: [], kills: 0, wave: 0, done: false, win: false, fx: null, nid: 0,
-    pool: opt.pool || {}, sk: {}, picks: [], choice: null, squad: SQUAD_START, gate: null, gateW: -1,
+    pool: opt.pool || {}, sk: {}, picks: [], choice: null, squad: SQUAD_START, gate: null, gateW: -1, shotN: 0,
     bossMul: opt.bossMul || 1, bossName: opt.bossName || CHAPTERS[tile.ch].boss,
   };
   startPick(b);
@@ -574,11 +581,11 @@ function hurt(b, e, dm, crit, kind) {
 }
 
 function shoot(b) {
-  const y = HERO_Y - 18, add = (x, vx, dm, p) => b.bullets.push({ x, y, vx, dm, p, hit: null, dead: false });
+  const y = HERO_Y - 18, add = (x, vx, dm, p) => b.bullets.push({ x, y, vx, dm, p, hit: null, dead: false, n: b.shotN++ });
   add(b.hx, 0, 1, b.cs.pierce);
   for (let k = 0; k < b.cs.multi; k++) add(b.hx + (k % 2 ? -1 : 1) * 9 * (1 + (k >> 1)), 0, b.cs.multiDm, b.cs.pierce);
   for (let k = 0; k < b.cs.diag; k++) { const vx = 170 + k * 90; add(b.hx, -vx, b.cs.diagDm, b.cs.pierce); add(b.hx, vx, b.cs.diagDm, b.cs.pierce); }
-  for (let k = 0; k < b.squad; k++) b.bullets.push({ x: allyX(b, k), y: HERO_Y - 4, vx: 0, dm: ALLY_DMG, p: 0, hit: null, dead: false, ally: true });
+  for (let k = 0; k < b.squad; k++) b.bullets.push({ x: allyX(b, k), y: HERO_Y - 4, vx: 0, dm: ALLY_DMG, p: 0, hit: null, dead: false, ally: true, n: b.shotN++ });
 }
 
 function step(b) {
@@ -953,6 +960,8 @@ const ICON = {
   weapon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6M16 16l4 4"/></svg>',
   armor: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6z"/></svg>',
   charm: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.6 5.6 6 .7-4.5 4.1 1.2 6L12 16.4 6.7 19.4l1.2-6L3.4 9.3l6-.7z"/></svg>',
+  lock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
+  pen: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16z"/></svg>',
 };
 const SLOT_NAME = { weapon: '무기', armor: '방어구', charm: '장신구' };
 const STAT = {
@@ -978,7 +987,7 @@ function freshState() {
   const starter = { id: 'starter', slot: 'weapon', rarity: 0, lv: 1, name: '낡은 목검', atk: 4, power: 8 };
   return { level: 1, exp: 0, gold: 60, tickets: 3, str: 10, int: 10, vit: 10, dex: 10, enh: 0,
     inv: [starter], eq: { weapon: 'starter', armor: null, charm: null },
-    cleared: TILES.map(() => false), seed: 1, shop: null, shopLv: -1, tab: 'today', q: null };
+    cleared: TILES.map(() => false), seed: 1, shop: null, shopLv: -1, tab: 'today', q: null, name: '', nameAsked: false };
 }
 function load() {
   try {
@@ -989,6 +998,23 @@ function load() {
 }
 function save() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(S)); } catch (e) {} if (typeof onSaved === 'function') onSaved(); }
 let S = freshState();
+
+// ===== 닉네임: 처음 실행할 때 한 번 묻고(건너뛰면 "모험가"), 상단 카드·캐릭터 탭에서 언제든 바꿈 =====
+const NICK_MIN = 2, NICK_MAX = 10, NICK_IDEAS = ['새벽 기사', '꾸준한 곰', '루틴 요정', '갓생 모험가', '아침형 용사', '작심백일'];
+const nick = () => S.name || '모험가';
+function openNick(first) {
+  openModal(`<div class="eyebrow">${first ? '반가워요!' : '닉네임'}</div><div class="big">${first ? '모험가님을 뭐라고 부를까요?' : '닉네임 바꾸기'}</div>
+    <label class="fld">닉네임 (${NICK_MIN}~${NICK_MAX}자)<input class="inp" id="nkName" maxlength="${NICK_MAX}" value="${esc(S.name)}" placeholder="예: 새벽 기사" autocomplete="nickname"></label>
+    <div class="presets">${NICK_IDEAS.map((n) => `<button class="btn xs" data-nkpreset="${n}">${n}</button>`).join('')}</div>
+    <div class="sub">상단 카드와 모닝콜에 보이는 이름이에요. 나중에 친구 기능이 생기면 친구에게도 보여요. 언제든 바꿀 수 있어요.</div>
+    <div class="warn" id="nkMsg"></div>
+    <button class="btn pri" data-act="nicksave">저장</button><button class="btn" data-act="close">${first ? '나중에 할게요' : '닫기'}</button>`);
+}
+function saveNick() {
+  const v = ($('nkName').value || '').replace(/\s+/g, ' ').trim(), n = [...v].length;
+  if (n < NICK_MIN || n > NICK_MAX) { $('nkMsg').textContent = `${NICK_MIN}~${NICK_MAX}자로 적어 주세요.`; return; }
+  S.name = v; save(); closeModal(); render(); toast(`반가워요, ${v}님!`);
+}
 
 // ===== 진행 상태 =====
 const curTile = () => { const k = S.cleared.indexOf(false); return k < 0 ? TILES.length : k; };
@@ -1031,6 +1057,7 @@ function renderHeader() {
   $('hCp').textContent = fmt(myCp());
   $('hAva').innerHTML = heroSvg(S);
   $('hTitle').textContent = titleOf(S.level);
+  $('hName').innerHTML = `<span>${esc(nick())}</span>${ICON.pen}`;
   $('hStreak').textContent = S.q ? dayStreak(S.q) : 0;
   document.querySelectorAll('.tabbar button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === S.tab)));
 }
@@ -1111,7 +1138,8 @@ function itemRow(it, actions) {
 function renderChar() {
   const c = classOf(S), cs = combat(S), maxStat = Math.max(S.str, S.int, S.vit, S.dex, 25);
   let h = `<section class="sec"><div class="card avatar"><div class="ava-big">${heroSvg(S)}</div>
-    <div class="grow"><div class="eyebrow">Lv.${S.level} · ${titleOf(S.level)}</div><div class="cname">${CLASSES[c].name}</div><div class="sub">${CLASSES[c].desc}</div>
+    <div class="grow"><div class="eyebrow">Lv.${S.level} · ${titleOf(S.level)}</div><div class="row" style="gap:6px"><div class="cname" style="min-width:0;overflow-wrap:anywhere">${esc(nick())}</div><button class="btn xs" data-act="nick">바꾸기</button></div>
+    <div class="sub"><b style="color:var(--fg)">${CLASSES[c].name}</b> · ${CLASSES[c].desc}</div>
     <div class="sub" style="margin-top:4px">장비를 바꾸면 모습이 바뀌어요. 영웅 등급 이상 방어구는 날개가 생겨요.</div></div></div></section>`;
   h += `<section class="sec"><div class="sec-h"><h2>전직</h2><span class="sub">가장 높은 능력치가 25 이상이면 자동으로 바뀌어요</span></div><div class="classes">${['berserker', 'archmage', 'guardian', 'ranger'].map((k) => { const st = CLASSES[k].stat; return `<div class="cls-card ${k === c ? 'on' : ''}" style="--c:var(--${st})">${artInline(heroArt(k), '')}<b>${CLASSES[k].name}</b><span class="num">${STAT[st].name} ${Math.min(S[st], 25)}/25</span></div>`; }).join('')}</div></section>`;
   h += '<section class="sec"><div class="sec-h"><h2>능력치</h2><span class="sub">루틴을 하면 오르고, 전투 능력이 돼요</span></div><div class="card list">';
@@ -1135,11 +1163,17 @@ function renderChar() {
 }
 
 function shopLevel() { return Math.min(TILES.length - 1, curTile()); }
+// 찜(10G)한 물건은 다음 칸으로 가거나 새로고침해도 살 때까지 남음 (값도 찜할 때 그대로)
+const SHOP_LOCK = 10, SHOP_REROLL = 20;
 function ensureShop(force) {
   const lv = shopLevel();
   if (!force && S.shop && S.shopLv === lv) return;
   const rng = mulberry32((S.seed * 2654435761 + lv * 97) >>> 0); S.seed++;
-  S.shop = [0, 1, 2].map((k) => { const it = makeItem(lv, rollRarity(rng, [60, 30, 9, 1]), rng, ['weapon', 'armor', 'charm'][k]); it.price = Math.round(it.power * (3 + it.rarity * 1.5)); return it; });
+  const kept = (S.shop || []).filter((it) => it.lock);
+  S.shop = ['weapon', 'armor', 'charm'].map((slot) => {
+    const old = kept.find((it) => it.slot === slot); if (old) return old;
+    const it = makeItem(lv, rollRarity(rng, [60, 30, 9, 1]), rng, slot); it.price = Math.round(it.power * (3 + it.rarity * 1.5)); return it;
+  });
   S.shopLv = lv; save();
 }
 const enhCost = () => Math.round(60 * Math.pow(1.45, S.enh));
@@ -1155,12 +1189,16 @@ function renderShop() {
   h += '</div></section>';
   h += `<section class="sec"><h2>무기 강화</h2><div class="card row"><div class="grow"><b>+${S.enh} 강화</b><div class="sub">1단계마다 공격력 +10%</div></div>
     <button class="btn sm pri num" data-act="enh" ${S.gold < enhCost() ? 'disabled' : ''}>${fmt(enhCost())}G</button></div></section>`;
-  h += `<section class="sec"><div class="sec-h"><h2>장비 상점</h2><button class="btn sm num" data-act="reroll" ${S.gold < 20 ? 'disabled' : ''}>새로고침 20G</button></div><div class="list">`;
+  const allLocked = S.shop.length && S.shop.every((it) => it.lock);
+  h += `<section class="sec"><div class="sec-h"><h2>장비 상점</h2><button class="btn sm num" data-act="reroll" ${S.gold < SHOP_REROLL || allLocked ? 'disabled' : ''}>새로고침 ${SHOP_REROLL}G</button></div><div class="list">`;
   S.shop.forEach((it, k) => {
     const d = cpWith(it) - myCp();
-    h += itemRow(it, `<div style="text-align:right"><div class="is num ${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : ''}${d}</div><button class="btn sm pri num" data-buy="${k}" ${S.gold < it.price ? 'disabled' : ''}>${fmt(it.price)}G</button></div>`);
+    const lockBtn = it.lock ? `<button class="btn sm lockd" data-unlock="${k}" aria-label="${esc(it.name)} 찜 풀기">${ICON.lock}찜</button>`
+      : `<button class="btn sm num" data-lock="${k}" ${S.gold < SHOP_LOCK ? 'disabled' : ''} aria-label="${esc(it.name)} 찜하기 ${SHOP_LOCK}골드">찜 ${SHOP_LOCK}G</button>`;
+    h += itemRow(it, `<div style="display:flex;flex-direction:column;gap:4px;align-items:flex-end"><span class="is num ${d > 0 ? 'up' : 'down'}">${d > 0 ? '+' : ''}${d}</span>
+      <div class="row" style="gap:4px">${lockBtn}<button class="btn sm pri num" data-buy="${k}" ${S.gold < it.price ? 'disabled' : ''}>${fmt(it.price)}G</button></div></div>`);
   });
-  h += '</div><div class="sub">상점 물건은 지도에서 다음 칸으로 갈 때마다 바뀌어요. 골드는 장비에만 쓰이고, 레벨·능력치는 루틴으로만 올라요.</div></section>';
+  h += `</div><div class="sub">상점 물건은 지도에서 다음 칸으로 갈 때마다 바뀌어요. 골드가 모자라면 <b>찜(${SHOP_LOCK}G)</b>해 두세요. 살 때까지 그 물건은 바뀌지 않아요. 골드는 장비에만 쓰이고, 레벨·능력치는 루틴으로만 올라요.</div></section>`;
   const bag = S.inv.filter((it) => !Object.values(S.eq).includes(it.id)).sort((a, b) => b.power - a.power);
   h += `<section class="sec"><div class="sec-h"><h2>가방</h2><span class="sub num">${bag.length}개</span></div><div class="list">`;
   if (!bag.length) h += '<div class="empty">상자 칸, 보스, 상점에서 장비를 얻어요.</div>';
@@ -1193,6 +1231,43 @@ function drawHero(g, x, y, s, cls, t) {
   g.save(); g.translate(x, y); g.scale(s, s);
   g.fillStyle = col; g.beginPath(); g.moveTo(-11, 13); g.quadraticCurveTo(-12, -4, 0, -5); g.quadraticCurveTo(12, -4, 11, 13); g.closePath(); g.fill();
   g.fillStyle = '#f3d9c2'; g.beginPath(); g.arc(0, -11, 7.5, 0, 7); g.fill();
+  g.restore();
+}
+
+// 동료 유닛: 직업별 그림 (견습생·전사·마법사·프리스트·궁수)
+function drawAlly(x, y, cls, t) {
+  const im = SPR['a-' + cls];
+  if (!ready(im)) { drawHero(g, x, y, 0.55, cls, t); return; }
+  const sz = 35; g.drawImage(im, x - sz / 2, y + 8 - sz * 0.93 + Math.sin(t * 8) * 1, sz, sz);
+}
+// 공격 모양: 마법사는 파이어볼·아이스볼 번갈아, 프리스트는 빛 구슬, 궁수는 화살, 전사는 회전 도끼, 견습생은 돌멩이. 영웅도 같은 모양(조금 더 큼)
+const ORB = {};
+function orb(key, inner, outer) {
+  if (ORB[key]) return ORB[key];
+  const c = document.createElement('canvas'); c.width = c.height = 32;
+  const x = c.getContext('2d'), gr = x.createRadialGradient(16, 16, 0, 16, 16, 16);
+  gr.addColorStop(0, '#fff'); gr.addColorStop(0.28, inner); gr.addColorStop(0.55, outer); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  x.fillStyle = gr; x.fillRect(0, 0, 32, 32);
+  return (ORB[key] = c);
+}
+function drawShot(bl, cls, t) {
+  const s = bl.ally ? 0.72 : 1;
+  if (cls === 'archmage' || cls === 'guardian') {
+    const im = cls === 'guardian' ? orb('holy', '#fff3b0', 'rgba(110,225,160,.6)') : bl.n % 2 ? orb('ice', '#c8ecff', 'rgba(80,160,255,.65)') : orb('fire', '#ffc36b', 'rgba(255,90,40,.65)');
+    const z = 22 * s; g.drawImage(im, bl.x - z / 2, bl.y - z / 2, z, z); return;
+  }
+  g.save(); g.translate(bl.x, bl.y); g.rotate(Math.atan2(bl.vx, 780)); g.scale(s, s);
+  if (cls === 'ranger') {
+    g.strokeStyle = '#e8d3a8'; g.lineWidth = 2; g.beginPath(); g.moveTo(0, -2); g.lineTo(0, 12); g.stroke();
+    g.fillStyle = '#eef0f6'; g.beginPath(); g.moveTo(0, -8); g.lineTo(-3.5, 0); g.lineTo(3.5, 0); g.closePath(); g.fill();
+    g.strokeStyle = '#7ee08f'; g.lineWidth = 1.8; g.beginPath(); g.moveTo(0, 9); g.lineTo(-3, 13); g.moveTo(0, 9); g.lineTo(3, 13); g.stroke();
+  } else if (cls === 'berserker') {
+    g.rotate(t * 16 + bl.n);
+    g.strokeStyle = '#7a4b2a'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(0, -6); g.lineTo(0, 7); g.stroke();
+    g.fillStyle = '#dfe3ee'; g.strokeStyle = '#1d1838'; g.lineWidth = 1.2; g.beginPath(); g.moveTo(0, -6); g.quadraticCurveTo(9, -8, 8, 1); g.lineTo(0, -1); g.closePath(); g.fill(); g.stroke();
+  } else {
+    g.fillStyle = '#b9b4c9'; g.strokeStyle = '#6b6680'; g.lineWidth = 1.2; g.beginPath(); g.arc(0, 0, 3.6, 0, 7); g.fill(); g.stroke();
+  }
   g.restore();
 }
 
@@ -1292,7 +1367,7 @@ function drawBattle(time) {
       g.globalAlpha = 0.32; g.fillStyle = col; roundRect(x0, b.gate.y - 19, w, 38, 9); g.fill();
       g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = 2.5; g.stroke();
       g.fillStyle = '#fff'; g.font = `24px ${css('--font-display')}`; g.fillText(gateText(gt), x0 + w / 2 - 14, b.gate.y + 1);
-      g.font = `700 11px ${css('--font-body')}`; g.fillStyle = '#c9c3ef'; g.fillText('궁수', x0 + w / 2 + 26, b.gate.y + 1);
+      g.font = `700 11px ${css('--font-body')}`; g.fillStyle = '#c9c3ef'; g.fillText(CLASS_UNIT[b.cs.cls], x0 + w / 2 + 26, b.gate.y + 1);
     });
     g.textBaseline = 'alphabetic';
   }
@@ -1305,18 +1380,15 @@ function drawBattle(time) {
   g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(0, WALL_Y + 14, W, H - WALL_Y);
   // 탄
   g.lineCap = 'round';
-  for (const bl of b.bullets) {
-    g.strokeStyle = bl.ally ? '#fff1b8' : css('--gold'); g.lineWidth = bl.ally ? 2 : 3;
-    g.beginPath(); g.moveTo(bl.x, bl.y); g.lineTo(bl.x - (bl.vx / 780) * 10, bl.y + 10); g.stroke();
-  }
-  for (let k = b.squad - 1; k >= 0; k--) drawHero(g, allyX(b, k), HERO_Y + 12, 0.55, b.cs.cls, time + k * 0.37);
+  for (const bl of b.bullets) drawShot(bl, b.cs.cls, time);
+  for (let k = b.squad - 1; k >= 0; k--) drawAlly(allyX(b, k), HERO_Y + 12, b.cs.cls, time + k * 0.37);
   drawHero(g, b.hx, HERO_Y, 1.1, b.cs.cls, time);
   // 효과
   for (const f of fxs) {
     if (f.k === 'pt') { g.globalAlpha = 1 - f.t / 0.5; g.fillStyle = f.c; g.fillRect(f.x + f.vx * f.t - 2, f.y + f.vy * f.t - 2, 4, 4); }
     if (f.k === 'hit') { g.globalAlpha = 1 - f.t / 0.7; g.fillStyle = css('--danger'); g.fillRect(f.x - 20, WALL_Y - 4, 40, 20); }
     if (f.k === 'chain') { g.globalAlpha = 1 - f.t / 0.25; g.strokeStyle = '#bfe0ff'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(f.x1, f.y1); g.lineTo((f.x1 + f.x2) / 2 + 8, (f.y1 + f.y2) / 2 - 6); g.lineTo(f.x2, f.y2); g.stroke(); }
-    if (f.k === 'gtxt') { g.globalAlpha = 1 - f.t / 1.1; g.textAlign = 'center'; g.font = `22px ${css('--font-display')}`; g.fillStyle = f.v > 0 ? css('--gold') : f.v < 0 ? css('--danger') : '#c9c3ef'; g.fillText(`궁수 ${f.txt}${f.v === 0 ? ' (변화 없음)' : ''}`, b.hx, HERO_Y - 54 - f.t * 30); }
+    if (f.k === 'gtxt') { g.globalAlpha = 1 - f.t / 1.1; g.textAlign = 'center'; g.font = `22px ${css('--font-display')}`; g.fillStyle = f.v > 0 ? css('--gold') : f.v < 0 ? css('--danger') : '#c9c3ef'; g.fillText(`${CLASS_UNIT[b.cs.cls]} ${f.txt}${f.v === 0 ? ' (변화 없음)' : ''}`, b.hx, HERO_Y - 54 - f.t * 30); }
     if (f.k === 'ring') { g.globalAlpha = 1 - f.t / 0.5; g.strokeStyle = css('--int'); g.lineWidth = 4; g.beginPath(); g.arc(b.hx, HERO_Y, 40 + f.t * 1100, 0, 7); g.stroke(); }
     if (f.k === 'num') {
       g.globalAlpha = 1 - f.t / 0.7; g.textAlign = 'center';
@@ -1328,7 +1400,7 @@ function drawBattle(time) {
   g.globalAlpha = 1;
   g.restore();
   // HUD
-  $('bWave').textContent = `웨이브 ${Math.max(1, b.wave)}/${b.nW} · 처치 ${b.kills} · 궁수 ${b.squad}`;
+  $('bWave').textContent = `웨이브 ${Math.max(1, b.wave)}/${b.nW} · 처치 ${b.kills} · ${CLASS_UNIT[b.cs.cls]} ${b.squad}`;
   $('bWallI').style.width = Math.max(0, ratio * 100) + '%';
   $('bWallI').style.background = wc;
   $('bWallT').textContent = `방벽 ${fmt(b.wall)} / ${fmt(b.wallMax)}`;
@@ -1445,7 +1517,7 @@ function openTile(i) {
 function poolHtml() {
   const q = Q(); if (!q) return '';
   const pool = todayPool(q), miss = ['str', 'int', 'dex', 'vit'].filter((k) => !pool[k]);
-  let h = `<div class="sub">웨이브마다 스킬 3개 중 1개를 골라요. <b>오늘 한 루틴</b>의 능력치 스킬은 ★강화돼요. 숫자 게이트를 지나면 동료 궁수가 늘거나 줄어요.</div>
+  let h = `<div class="sub">웨이브마다 스킬 3개 중 1개를 골라요. <b>오늘 한 루틴</b>의 능력치 스킬은 ★강화돼요. 숫자 게이트를 지나면 동료(직업마다 모습이 달라요)가 늘거나 줄어요.</div>
     <div class="pchips">${['str', 'int', 'dex', 'vit'].map((k) => pool[k] ? `<span class="tag tstat" style="--c:var(--${k})">★ ${SKILL_CAT[k].name} ×${STAR[Math.min(2, pool[k])]}</span>` : `<span class="tag">${SKILL_CAT[k].name} 기본</span>`).join('')}</div>`;
   if (miss.length) {
     const k = miss[0], rr = q.routines.find((r) => r.stat === k && r.active);
@@ -1465,7 +1537,7 @@ function showResult(out, b) {
       <div><dt>남은 방벽</dt><dd class="num">${Math.round((b.wall / b.wallMax) * 100)}%</dd></div>
       <div><dt>${out.win ? '획득 골드' : '위로금'}</dt><dd class="num" style="color:var(--gold)">+${fmt(out.gold)}</dd></div>
     </dl>
-    <div class="pchips">${b.picks.map((id) => `<span class="tag tstat" style="--c:var(${CAT_COLOR[SKILLS[id].cat]})">${skillMul(b, id) > 1 ? '★' : ''}${SKILLS[id].name}</span>`).join('')}<span class="tag tstat" style="--c:var(--gold)">궁수 ${b.squad}명</span></div>`;
+    <div class="pchips">${b.picks.map((id) => `<span class="tag tstat" style="--c:var(${CAT_COLOR[SKILLS[id].cat]})">${skillMul(b, id) > 1 ? '★' : ''}${SKILLS[id].name}</span>`).join('')}<span class="tag tstat" style="--c:var(--gold)">동료 ${CLASS_UNIT[b.cs.cls]} ${b.squad}명</span></div>`;
   if (out.item) {
     const d = cpWith(out.item) - cp;
     h += `<div class="sub">장비 획득</div>${itemRow(out.item, d > 0 ? `<button class="btn sm pri" data-equip="${out.item.id}" data-close="1">장착 +${d}</button>` : '')}`;
@@ -1485,7 +1557,7 @@ function showResult(out, b) {
   openModal(h);
 }
 
-// ===== 일러스트: 직업 캐릭터 5종 · 몬스터 4종 · 주간 보스 3종 (투명 배경 SVG, 잉크 외곽선 스티커 톤) =====
+// ===== 일러스트: 직업 캐릭터 5종 · 동료 유닛 5종 · 몬스터 4종 · 주간 보스 3종 (투명 배경 SVG, 잉크 외곽선 스티커 톤) =====
 // 화면(DOM)과 전투 캔버스(이미지로 변환)에서 같은 그림을 씀. 그림 색은 테마와 상관없이 고정.
 const INK = '#1d1838', SKIN = '#ffd9b8', CHEEK = '#ff9a8a';
 const O = `stroke="${INK}" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"`;
@@ -1549,8 +1621,43 @@ const HERO = {
   },
 };
 
-function heroArt(cls) {
-  const h = HERO[cls] || HERO.novice;
+// 동료 유닛 5종: 영웅과 같은 몸에 직업별 옷·모자·무기만 다르게 (전투에서 작게 그려지므로 실루엣과 색으로 구분)
+const ALLY = {
+  novice: { // 견습생: 새총
+    main: '#e6d6a8', dark: '#b8a370', mood: 'happy', back: '',
+    hair: `<path d="M32 34q-1-18 18-19 19 1 18 19-6-7-12-6l-6-5-5 6q-8-2-13 5z" fill="#3a2a1a" ${O}/>`,
+    hat: `<path d="M31 30q2-16 19-16t19 16z" fill="#7fbf6a" ${O}/><path d="M66 29q10 0 14 4H64z" fill="#5d9c4c" ${O}/>`,
+    weapon: `<path d="M70 72 72 52" stroke="${INK}" stroke-width="7" stroke-linecap="round"/><path d="M70 72 72 52" stroke="#c98d55" stroke-width="3.6" stroke-linecap="round"/><path d="M72 52l-6-10M72 52l6-10" stroke="${INK}" stroke-width="6" stroke-linecap="round"/><path d="M72 52l-6-10M72 52l6-10" stroke="#c98d55" stroke-width="2.8" stroke-linecap="round"/><path d="M66 42q6 7 12 0" fill="none" stroke="#e8423f" stroke-width="2.4"/>`,
+    off: '',
+  },
+  berserker: { // 전사: 둥근 투구 + 도끼
+    main: '#8f5a3c', dark: '#6b4228', mood: 'focus', back: '', hair: '',
+    hat: `<path d="M30 36q0-22 20-22t20 22z" fill="#9aa3b8" ${O}/><path d="M30 36h40" ${O}/><path d="M50 14q2-10 12-12-1 8-8 13z" fill="#ff6a3d" ${Ow(2.4)}/>`,
+    weapon: `<path d="M70 76 78 34" stroke="${INK}" stroke-width="8" stroke-linecap="round"/><path d="M70 76 78 34" stroke="#7a4b2a" stroke-width="4.4" stroke-linecap="round"/><path d="M76 33q13-7 17 4-2 11-15 8z" fill="#dfe3ee" ${O}/>`,
+    off: '',
+  },
+  archmage: { // 마법사: 뾰족 모자 + 불꽃 구슬 지팡이
+    main: '#4b4fb0', dark: '#34378a', mood: 'calm', robe: true, back: '', hair: '',
+    hat: `<path d="M30 31q20-7 40 0-5 4-20 4t-20-4z" fill="#34378a" ${O}/><path d="M36 29q8-22 22-26 2 3 0 6-6 4-4 20z" fill="#4b4fb0" ${O}/><circle cx="58" cy="4" r="3" fill="#ffd447" ${Ow(2)}/>`,
+    weapon: `<path d="M71 82 77 44" stroke="${INK}" stroke-width="7" stroke-linecap="round"/><path d="M71 82 77 44" stroke="#8a5a32" stroke-width="3.6" stroke-linecap="round"/><circle cx="78" cy="38" r="7.5" fill="#ff7a3d" ${O}/><circle cx="75.5" cy="35.5" r="2.2" fill="#fff" opacity=".85"/>`,
+    off: `<path d="M42 66l2 1.4M58 76l2 1.4" stroke="#ffd447" stroke-width="3" stroke-linecap="round"/>`,
+  },
+  guardian: { // 프리스트: 흰 두건 + 후광 + 빛 구슬 지팡이
+    main: '#f4f2ff', dark: '#c9c3ef', mood: 'happy', robe: true, back: '', hair: '',
+    hat: `<path d="M29 46Q27 16 50 16T71 46Q67 42 66 34 62 26 50 26T34 34Q33 42 29 46z" fill="#e2f6ec" ${O}/><ellipse cx="50" cy="10" rx="13" ry="4" fill="none" stroke="#ffd447" stroke-width="3.5"/>`,
+    weapon: `<path d="M72 86 76 32" stroke="${INK}" stroke-width="7" stroke-linecap="round"/><path d="M72 86 76 32" stroke="#c98d55" stroke-width="3.6" stroke-linecap="round"/><circle cx="76" cy="27" r="7" fill="#7fe0b0" ${O}/><path d="M76 17v-4M68 22l-4-3M84 22l4-3" stroke="#ffd447" stroke-width="2.4" stroke-linecap="round"/>`,
+    off: `<circle cx="50" cy="67" r="4" fill="#10b07e" ${Ow(2)}/>`,
+  },
+  ranger: { // 궁수: 초록 두건 + 활 + 화살통
+    main: '#3fa35b', dark: '#2b7a40', mood: 'focus',
+    back: HERO.ranger.back, hair: HERO.ranger.hair,
+    hat: HERO.ranger.hat.split('#9a5cff').join('#3fa35b').split('#c9a6ff').join('#8fd6a0'),
+    weapon: HERO.ranger.weapon, off: '',
+  },
+};
+function heroArt(cls) { return figureArt(HERO[cls] || HERO.novice); }
+function allyArt(cls) { return figureArt(ALLY[cls] || ALLY.novice); }
+function figureArt(h) {
   const legs = h.robe ? '' : `<rect x="39" y="76" width="9" height="15" rx="4" fill="#3a2f5c" ${O}/><rect x="52" y="76" width="9" height="15" rx="4" fill="#3a2f5c" ${O}/>`;
   const body = h.robe
     ? `<path d="M36 56h28q6 2 7 8l4 26q-25 6-50 0l4-26q1-6 7-8z" fill="${h.main}" ${O}/><path d="M50 58v32" stroke="${h.dark}" stroke-width="3"/>`
@@ -1653,6 +1760,7 @@ function spriteImg(key, svg) {
 const ready = (im) => im && im.complete && im.naturalWidth > 0;
 function preloadArt() {
   for (const k of Object.keys(HERO)) spriteImg('h-' + k, heroArt(k));
+  for (const k of Object.keys(ALLY)) spriteImg('a-' + k, allyArt(k));
   for (const k of Object.keys(MON)) spriteImg('m-' + k, MON[k]);
   BOSS.forEach((b, i) => spriteImg('b-' + i, b));
 }
@@ -1940,6 +2048,7 @@ function openCall(x) {
   $('modal').innerHTML = `<div class="call" role="dialog" aria-modal="true" aria-label="모닝콜">
     <div class="call-top"><span class="live"></span>QuestCall 모닝콜 · ${r.time}</div>
     <div class="caller">${esc(st.caller)}</div>
+    <div class="call-rw">${esc(nick())}님, 퀘스트 시간이에요!</div>
     <div class="ring" aria-hidden="true"><span>${QICON.phone}</span></div>
     <div class="cq">${esc(questText(x))}${x.goalId ? ` · ${amountText(x)}` : ''}</div>
     <div class="call-rw">${TIER_NAME[x.tier]} 단계 · ${rewardLine(x.tier, r.stat)}</div>
@@ -2324,12 +2433,12 @@ function upcomingAlarms() {
       const x = q.quests.find((y) => y.id === r.id + '@' + d); if (x && x.status !== 'todo') continue;
       const [hh, mm] = r.time.split(':').map(Number), at = new Date(dt.getFullYear(), dt.getMonth(), dt.getDate(), hh, mm).getTime();
       if (at <= now + 5000) continue;
-      out.push({ id: hash32(r.id + '@' + d), at, questId: r.id + '@' + d, title: q.settings.caller, body: tierInfo(r, x ? x.tier : r.tier).title });
+      out.push({ id: hash32(r.id + '@' + d), at, questId: r.id + '@' + d, title: q.settings.caller, body: `${nick()}님, ${tierInfo(r, x ? x.tier : r.tier).title}` });
     }
   }
   if (q.snoozed && q.snoozed.until > now) {
     const x = q.quests.find((y) => y.id === q.snoozed.qid);
-    if (x && x.status === 'todo') out.push({ id: hash32('snooze'), at: q.snoozed.until, questId: x.id, title: q.settings.caller, body: questText(x) + ' (다시 울림)' });
+    if (x && x.status === 'todo') out.push({ id: hash32('snooze'), at: q.snoozed.until, questId: x.id, title: q.settings.caller, body: `${nick()}님, ${questText(x)} (다시 울림)` });
   }
   return out.sort((a, b) => a.at - b.at).slice(0, 60);
 }
@@ -2478,21 +2587,34 @@ document.addEventListener('click', (ev) => {
     S.inv = S.inv.filter((x) => x !== it); S.gold += sellPrice(it); save(); render(); toast(`${it.name} 판매 +${sellPrice(it)}G`);
     return;
   }
+  if (d.lock != null) {
+    const it = S.shop[+d.lock]; if (!it || it.lock || S.gold < SHOP_LOCK) return;
+    S.gold -= SHOP_LOCK; it.lock = true; save(); render(); toast(`${it.name} 찜! 살 때까지 상점에 남아요`);
+    return;
+  }
+  if (d.unlock != null) {
+    const it = S.shop[+d.unlock]; if (!it) return;
+    it.lock = false; save(); render(); toast(`${it.name} 찜을 풀었어요`);
+    return;
+  }
   if (d.buy != null) {
     const it = S.shop[+d.buy]; if (!it || S.gold < it.price) return;
-    S.gold -= it.price; const own = { ...it }; delete own.price; S.inv.push(own);
+    S.gold -= it.price; const own = { ...it }; delete own.price; delete own.lock; S.inv.push(own);
     S.shop.splice(+d.buy, 1); save(); render(); toast(`${it.name} 구매`);
     return;
   }
   if (d.hbpreset) { $('hbName').value = d.hbpreset; return; }
+  if (d.nkpreset) { $('nkName').value = d.nkpreset; return; }
   const a = d.act;
   if (a === 'close') closeModal();
   else if (a === 'habitname') openHabitName();
+  else if (a === 'nick') openNick(false);
+  else if (a === 'nicksave') saveNick();
   else if (a === 'habitsave') saveHabit();
   else if (a === 'habitclaim') claimHabit();
   else if (a === 'goroutine') { closeModal(); S.tab = 'today'; save(); render(); window.scrollTo(0, 0); }
   else if (a === 'enh') { const c = enhCost(); if (S.gold < c) return; S.gold -= c; S.enh++; save(); render(); toast(`무기 +${S.enh} 강화 성공`); }
-  else if (a === 'reroll') { if (S.gold < 20) return; S.gold -= 20; ensureShop(true); render(); }
+  else if (a === 'reroll') { if (S.gold < SHOP_REROLL) return; S.gold -= SHOP_REROLL; ensureShop(true); render(); }
   else if (a === 'reset') { $('resetBox').innerHTML = '<div class="row"><span class="grow sub">진행 상황이 모두 지워져요.</span><button class="btn sm" data-act="resetno">취소</button><button class="btn sm pri" data-act="resetyes">초기화</button></div>'; }
   else if (a === 'resetno') render();
   else if (a === 'resetyes') { S = freshState(); save(); render(); toast('처음부터 시작해요'); }
@@ -2502,8 +2624,10 @@ document.addEventListener('keydown', (ev) => { if (ev.key === 'Escape') closeMod
 function start(data) {
   S = (data && data.S) || load() || freshState();
   if (!S.tab || S.tab === 'bag') S.tab = 'today';
+  if (S.name === undefined) S.name = '';
   syncQuests(); save();
   render();
+  if (!S.name && !S.nameAsked) { S.nameAsked = true; save(); openNick(true); }
   if (typeof nativeStart === 'function') nativeStart();
 }
 window.claude?.hot?.snapshot?.(() => ({ S }));
@@ -2512,7 +2636,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 
 <script>
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform())) {
-  navigator.serviceWorker.register('sw.js?v=a85ee62ad3').catch(function () {});
+  navigator.serviceWorker.register('sw.js?v=bdb191c5b4').catch(function () {});
 }
 </script>
 </body></html>
