@@ -278,6 +278,33 @@ main { flex: 1; padding-block: 8px calc(96px + env(safe-area-inset-bottom, 0px))
 #battle .btn { background: #2b2554; color: #f4f2ff; border-color: #050310; box-shadow: 2px 2px 0 #050310; }
 #battle .btn.on { background: #ffd447; color: #1d1838; }
 .hint { font-size: 11.5px; color: #c9c3ef; text-align: center; padding: 0 16px; }
+.bskills { grid-column: 1 / 3; display: flex; flex-wrap: wrap; gap: 4px; min-height: 0; }
+.bskills span { font-size: 10.5px; font-weight: 800; padding: 0 7px; border-radius: 99px; color: #f4f2ff; background: color-mix(in srgb, var(--c) 35%, #2b2554); border: 1.5px solid color-mix(in srgb, var(--c) 70%, #050310); }
+.cvwrap { position: relative; }
+.pick { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; padding: 16px; background: rgb(18 15 38 / .8); animation: pop2 .18s ease-out; }
+@keyframes pop2 { from { opacity: 0; } }
+.pick h3 { font-size: 22px; color: #ffd447; }
+.pick .psub { font-size: 12px; color: #c9c3ef; text-align: center; max-width: 40ch; }
+.pcard { width: 100%; max-width: 340px; display: flex; gap: 10px; align-items: center; text-align: left; color: #f4f2ff; background: #2b2554; border: 2px solid #050310; border-left: 7px solid var(--c); border-radius: 14px; padding: 10px 12px; box-shadow: 2px 2px 0 #050310; font: inherit; }
+.pcard .pic { width: 34px; height: 34px; border-radius: 10px; display: grid; place-items: center; flex: none; color: var(--c); background: color-mix(in srgb, var(--c) 18%, #1d1838); }
+.pcard .pic svg { width: 20px; height: 20px; }
+.pcard b { font-size: 14.5px; } .pcard small { display: block; font-size: 11.5px; color: #c9c3ef; line-height: 1.35; }
+.pcard .pcat { font-size: 10.5px; font-weight: 800; color: var(--c); }
+.pcard.auto { outline: 3px solid #ffd447; outline-offset: 1px; }
+.pcard.star { background: linear-gradient(100deg, color-mix(in srgb, var(--c) 22%, #2b2554), #2b2554 70%); }
+.pbar { width: 100%; max-width: 340px; height: 5px; border-radius: 99px; background: #2b2554; overflow: hidden; } .pbar i { display: block; height: 100%; width: 0; background: #ffd447; }
+.pchips { display: flex; flex-wrap: wrap; gap: 5px; }
+.habit { display: flex; gap: 12px; align-items: center; background: color-mix(in srgb, var(--danger) 9%, var(--card)); }
+.habit .hb-art { width: 76px; height: 76px; flex: none; border-radius: 16px; background: var(--card2); border: 2px solid var(--edge); }
+.habit .hb-art svg { width: 100%; height: 100%; display: block; }
+.hb-name { font-family: var(--font-display); font-size: 21px; line-height: 1.15; font-weight: 400; }
+.hbar i { background: var(--danger); }
+.hbarts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.hbart input { position: absolute; opacity: 0; pointer-events: none; }
+.hbart span { display: block; border: 2px solid var(--soft); border-radius: 14px; background: var(--card); padding: 4px; cursor: pointer; }
+.hbart span svg { width: 100%; aspect-ratio: 1; display: block; }
+.hbart input:checked + span { border-color: var(--edge); background: color-mix(in srgb, var(--danger) 14%, var(--card)); box-shadow: var(--sh-sm); }
+.hbart input:focus-visible + span { outline: 3px solid var(--int); outline-offset: 2px; }
 
 .perm { display: flex; align-items: center; gap: 8px; font-size: 13px; }
 .perm .ok { color: var(--ok); font-weight: 800; } .perm .no { color: var(--danger); font-weight: 800; }
@@ -313,8 +340,9 @@ textarea.inp { min-height: 76px; resize: vertical; font-size: 12px; font-family:
   <div class="bhud">
     <div class="bt" id="bTitle">전투</div><div class="bw num" id="bWave">웨이브 1/3</div>
     <div class="wallbar"><i id="bWallI" style="width:100%"></i><span class="num" id="bWallT">방벽</span></div>
+    <div class="bskills" id="bSkills"></div>
   </div>
-  <div class="cvwrap" id="cvwrap"><canvas id="cv" width="360" height="600"></canvas></div>
+  <div class="cvwrap" id="cvwrap"><canvas id="cv" width="360" height="600"></canvas><div class="pick" id="bPick" hidden></div></div>
   <div class="hint" id="bHint">화면을 좌우로 끌면 직접 조작으로 바뀌어요</div>
   <div class="bctl">
     <button class="btn" id="bAuto">자동전투 켜짐</button>
@@ -374,13 +402,13 @@ const CLASSES = {
 };
 
 const BAL = {
-  hpBase: 80, hpLin: 0.22, hpPow: 1.7, dmgBase: 16, dmgLin: 0.07,
+  hpBase: 190, hpLin: 0.22, hpPow: 1.75, dmgBase: 16, dmgLin: 0.07,
   countBase: 7, countGrow: 0.25, countWave: 3, gapBase: 0.75, gapTile: 0.004, gapMin: 0.38,
   goldBase: 18, goldGrow: 1.12,
 };
 
-// 칸별 권장 전투력: 균형 성장 모델로 자동전투 승률 75%가 되는 지점을 시뮬레이션해서 뽑은 값
-const REC_CP = [100, 115, 130, 190, 280, 290, 305, 340, 350, 385, 395, 420, 530, 540, 550, 620, 630, 655, 665, 755, 855, 865, 875, 920];
+// 칸별 권장 전투력: 균형 성장 모델(4가지 루틴을 매일 → 스킬 4종 모두 ★강화)로 자동전투 승률 75%가 되는 지점을 시뮬레이션해서 뽑은 값
+const REC_CP = [110, 115, 120, 190, 280, 285, 305, 340, 345, 380, 385, 405, 545, 550, 555, 610, 615, 640, 665, 745, 850, 855, 860, 865];
 
 function mulberry32(a) {
   return function () {
@@ -434,95 +462,208 @@ function pickType(tile, w, rng) {
   return 'slime';
 }
 
+// ===== 웨이브 스킬 (Archero식 3택1): 오늘 한 루틴의 능력치에 해당하는 스킬은 ★강화 =====
+// 풀(나오는 카드)은 항상 같고 효과만 세짐 → 루틴을 더 하면 같은 선택이 더 강해질 뿐, 절대 손해가 없음
+const SKILL_CAT = {
+  base: { name: '기본', stat: null },
+  str: { name: '물리', stat: 'str' },
+  int: { name: '마법', stat: 'int' },
+  dex: { name: '연사', stat: 'dex' },
+  vit: { name: '회복', stat: 'vit' },
+};
+const STAR = [1, 1.5, 1.75]; // 오늘 그 능력치 루틴 0번 / 1번 / 2번 이상
+const pct = (v) => Math.round(v * 100) + '%';
+// m: 강화 배율. ai: 자동전투 점수("첫 선택으로 강제했을 때의 승률" 순서에 맞춤)
+const SKILLS = {
+  sharp: { cat: 'base', name: '날카로운 화살', max: 3, ai: 5, txt: () => '공격력 +20%', on: (b) => { b.cs.atk *= 1.2; } },
+  quick: { cat: 'base', name: '빠른 손놀림', max: 3, ai: 4.5, txt: () => '연사 속도 +15%', on: (b) => { b.cs.rate *= 1.15; } },
+  brick: { cat: 'base', name: '방벽 보강', max: 3, ai: (b) => 3 + (1 - b.wall / b.wallMax) * 8, txt: () => '최대 방벽 +20%, 그만큼 회복', on: (b) => { const d = b.wallMax * 0.2; b.wallMax += d; b.wall += d; } },
+  power: { cat: 'str', name: '강타', max: 3, ai: 8.5, txt: (m) => `공격력 +${pct(0.3 * m)}`, on: (b, m) => { b.cs.atk *= 1 + 0.3 * m; } },
+  pierce: { cat: 'str', name: '관통 화살', max: 2, ai: 7, txt: (m) => '화살이 적 1명을 더 뚫음' + (m > 1 ? `, 공격력 +${pct((m - 1) * 0.2)}` : ''), on: (b, m) => { b.cs.pierce++; b.cs.atk *= 1 + (m - 1) * 0.2; } },
+  multi: { cat: 'str', name: '멀티샷', max: 2, ai: 9, txt: (m) => `앞으로 화살 1발 추가 (피해 ${pct(0.6 * m)})`, on: (b, m) => { b.cs.multi++; b.cs.multiDm = 0.6 * m; } },
+  giant: { cat: 'str', name: '거인 사냥꾼', max: 2, ai: (b) => (b.tile.type === 'boss' ? 8 : 4), txt: (m) => `골렘·보스에게 피해 +${pct(0.5 * m)}`, on: (b, m) => { b.cs.giant += 0.5 * m; } },
+  surge: { cat: 'int', name: '파동 증폭', max: 3, ai: 8, txt: (m) => `지혜의 파동 피해 +${pct(0.6 * m)}`, on: (b, m) => { b.cs.wave *= 1 + 0.6 * m; } },
+  haste: { cat: 'int', name: '파동 가속', max: 2, ai: 7, txt: (m) => `지혜의 파동 재사용 ${pct(0.3 * m)} 단축`, on: (b, m) => { b.cs.waveCd *= 1 - 0.3 * m; } },
+  chain: { cat: 'int', name: '번개 사슬', max: 2, ai: 6.5, txt: (m) => `궁수 화살까지, 명중 시 ${pct(0.2 * m)} 확률로 옆 적에게 번개`, on: (b, m) => { b.cs.chain += 0.2 * m; } },
+  frost: { cat: 'int', name: '서리 파동', max: 1, ai: 9.5, txt: (m) => `파동에 맞은 적이 2초 동안 ${pct(0.3 * m)} 느려짐`, on: (b, m) => { b.cs.frost = 0.3 * m; } },
+  rapid: { cat: 'dex', name: '속사', max: 3, ai: 7.5, txt: (m) => `연사 속도 +${pct(0.2 * m)}`, on: (b, m) => { b.cs.rate *= 1 + 0.2 * m; } },
+  diag: { cat: 'dex', name: '사선 화살', max: 2, ai: 10, txt: (m) => `양옆 대각선으로 화살 2발 추가 (피해 ${pct(0.35 * m)})`, on: (b, m) => { b.cs.diag++; b.cs.diagDm = 0.35 * m; } },
+  critup: { cat: 'dex', name: '급소 노리기', max: 3, ai: 4, txt: (m) => `치명타 확률 +${pct(0.1 * m)}p`, on: (b, m) => { b.cs.crit = Math.min(0.85, b.cs.crit + 0.1 * m); } },
+  critdmg: { cat: 'dex', name: '치명 강화', max: 2, ai: (b) => 2 + b.cs.crit * 10, txt: (m) => `치명타 피해 +${(0.5 * m).toFixed(2).replace(/0$/, '')}배`, on: (b, m) => { b.cs.critMul += 0.5 * m; } },
+  potion: { cat: 'vit', name: '회복 물약', max: 5, ai: (b) => (1 - b.wall / b.wallMax) * 20, need: (b) => b.wall < b.wallMax * 0.9, txt: (m) => `방벽을 최대치의 ${pct(0.4 * m)} 회복`, on: (b, m) => { b.wall = Math.min(b.wallMax, b.wall + b.wallMax * 0.4 * m); } },
+  regen: { cat: 'vit', name: '재생 룬', max: 2, ai: 8, txt: (m) => `방벽이 초당 ${(0.8 * m).toFixed(1)}% 회복`, on: (b, m) => { b.cs.regen += 0.008 * m; } },
+  iron: { cat: 'vit', name: '철벽', max: 2, ai: 8, txt: (m) => `방벽이 받는 피해 −${pct(0.2 * m)}`, on: (b, m) => { b.cs.wallMul *= 1 - 0.2 * m; } },
+  drain: { cat: 'vit', name: '생명 흡수', max: 2, ai: 5.5, txt: (m) => `적을 처치할 때마다 방벽 ${(1.2 * m).toFixed(1)}% 회복`, on: (b, m) => { b.cs.drain += 0.012 * m; } },
+};
+function skillMul(b, id) { const c = SKILLS[id].cat; return c === 'base' ? 1 : STAR[Math.min(2, b.pool[c] || 0)]; }
+function rollChoices(b) {
+  const cand = Object.keys(SKILLS).filter((id) => (b.sk[id] || 0) < SKILLS[id].max && (!SKILLS[id].need || SKILLS[id].need(b)));
+  const out = [];
+  while (out.length < 3 && cand.length) out.push(cand.splice(Math.floor(b.rng() * cand.length), 1)[0]);
+  return out;
+}
+// 점수는 스킬마다 "첫 선택으로 강제했을 때의 승률"을 재서 순서를 맞춤. 같은 스킬을 겹칠수록 1점씩 깎음
+function autoPick(b) {
+  let best = b.choice[0], bs = -1e9;
+  for (const id of b.choice) { const a = SKILLS[id].ai, s = (typeof a === 'function' ? a(b) : a) - (b.sk[id] || 0); if (s > bs) { bs = s; best = id; } }
+  return best;
+}
+function chooseSkill(b, id) {
+  if (!b.choice || !b.choice.includes(id)) return;
+  b.sk[id] = (b.sk[id] || 0) + 1; b.picks.push(id); SKILLS[id].on(b, skillMul(b, id));
+  b.choice = null; nextWave(b);
+}
+function startPick(b) {
+  const c = rollChoices(b);
+  if (c.length) b.choice = c; else nextWave(b);
+}
+function nextWave(b) { b.wv++; b.wt = 0; b.lastSpawn = 0; b.wave = b.wv + 1; }
+
+// ===== 숫자 게이트 (Last War식): 웨이브마다 좌우 게이트 한 쌍이 내려오고, 영웅이 지나간 쪽이 동료 궁수 수를 바꿈 =====
+const SQUAD_START = 1, SQUAD_MAX = 8, ALLY_DMG = 0.3, GATE_T = 2.2, GATE_SPD = 72, GATE_Y = HERO_Y - 20;
+function gateApply(n, gt) { return clamp(gt.op === '+' ? n + gt.n : gt.op === 'x' ? n * gt.n : n - gt.n, 0, SQUAD_MAX); }
+function gateText(gt) { return (gt.op === '+' ? '+' : gt.op === 'x' ? '×' : '−') + gt.n; }
+function makeGate(b) {
+  const good = b.rng() < 0.55 ? { op: '+', n: 1 + Math.floor(b.rng() * 3) } : { op: 'x', n: 2 };
+  const opts = [{ op: '+', n: 1 }, { op: '+', n: 2 }, { op: 'x', n: 2 }, { op: '-', n: 1 }, { op: '-', n: 2 }];
+  let other = opts[Math.floor(b.rng() * opts.length)];
+  if (other.op === good.op && other.n === good.n) other = { op: '-', n: 1 };
+  return b.rng() < 0.5 ? { y: -30, l: good, r: other } : { y: -30, l: other, r: good };
+}
+function allyX(b, k) { return clamp(b.hx + (k % 2 ? 1 : -1) * (20 + Math.floor(k / 2) * 17), 8, W - 8); }
+
 function buildWaves(tile, rng) {
   const i = tile.i, nW = 3, list = [];
-  let t = 1.2;
   for (let w = 0; w < nW; w++) {
     const n = Math.round((BAL.countBase + i * BAL.countGrow + w * BAL.countWave) * (tile.type === 'gold' ? 1.25 : 1) * (tile.type === 'gate' ? 1.15 : 1));
     const gap = Math.max(BAL.gapMin, BAL.gapBase - i * BAL.gapTile - w * 0.07);
+    let t = 1;
     for (let k = 0; k < n; k++) {
       list.push({ t, type: pickType(tile, w, rng), x: 26 + rng() * (W - 52), w });
       t += gap * (0.6 + rng() * 0.8);
     }
-    t += 3;
   }
-  if (tile.type === 'boss') list.push({ t, type: 'boss', x: W / 2, w: nW });
+  if (tile.type === 'boss') list.push({ t: 1, type: 'boss', x: W / 2, w: nW });
   return { list, nW: nW + (tile.type === 'boss' ? 1 : 0) };
 }
 
-function newBattle(p, tile, seed, auto) {
+// opt.pool: 오늘 완료한 루틴의 능력치별 횟수 {str:1, int:2} → 그 카테고리 스킬 ★강화, opt.bossMul·bossName: 나쁜 습관 보스(주간 루틴 달성만큼 약해짐)
+function newBattle(p, tile, seed, auto, opt) {
+  opt = opt || {};
   const rng = mulberry32(seed), cs = combat(p), wv = buildWaves(tile, rng);
-  return {
+  Object.assign(cs, { multi: 0, multiDm: 0.6, diag: 0, diagDm: 0.35, giant: 0, chain: 0, frost: 0, critMul: 1.6, wallMul: 1, drain: 0 });
+  const b = {
     tile, seed, rng, cs, list: wv.list, nW: wv.nW, sc: tileScale(tile.i), elite: tile.type === 'gate' ? 1.3 : 1,
-    idx: 0, t: 0, wall: cs.wall, wallMax: cs.wall, hx: W / 2, inputX: null, auto: auto !== false,
+    idx: 0, t: 0, wt: 0, wv: -1, lastSpawn: 0, wall: cs.wall, wallMax: cs.wall, hx: W / 2, inputX: null, auto: auto !== false,
     cd: 0, waveT: cs.waveCd * 0.6, enemies: [], bullets: [], kills: 0, wave: 0, done: false, win: false, fx: null, nid: 0,
-    bossName: CHAPTERS[tile.ch].boss,
+    pool: opt.pool || {}, sk: {}, picks: [], choice: null, squad: SQUAD_START, gate: null, gateW: -1,
+    bossMul: opt.bossMul || 1, bossName: opt.bossName || CHAPTERS[tile.ch].boss,
   };
+  startPick(b);
+  return b;
 }
 
 function hurt(b, e, dm, crit, kind) {
   e.hp -= dm;
   if (b.fx) b.fx('dmg', e, dm, crit, kind);
-  if (e.hp <= 0) { b.kills++; if (b.fx) b.fx('kill', e); }
+  if (e.hp <= 0) {
+    b.kills++;
+    if (b.cs.drain) b.wall = Math.min(b.wallMax, b.wall + b.wallMax * b.cs.drain);
+    if (b.fx) b.fx('kill', e);
+  }
+}
+
+function shoot(b) {
+  const y = HERO_Y - 18, add = (x, vx, dm, p) => b.bullets.push({ x, y, vx, dm, p, hit: null, dead: false });
+  add(b.hx, 0, 1, b.cs.pierce);
+  for (let k = 0; k < b.cs.multi; k++) add(b.hx + (k % 2 ? -1 : 1) * 9 * (1 + (k >> 1)), 0, b.cs.multiDm, b.cs.pierce);
+  for (let k = 0; k < b.cs.diag; k++) { const vx = 170 + k * 90; add(b.hx, -vx, b.cs.diagDm, b.cs.pierce); add(b.hx, vx, b.cs.diagDm, b.cs.pierce); }
+  for (let k = 0; k < b.squad; k++) b.bullets.push({ x: allyX(b, k), y: HERO_Y - 4, vx: 0, dm: ALLY_DMG, p: 0, hit: null, dead: false, ally: true });
 }
 
 function step(b) {
-  b.t += DT;
-  while (b.idx < b.list.length && b.list[b.idx].t <= b.t) {
-    const s = b.list[b.idx++], d = ENEMY[s.type], hp = d.hp * b.sc.hp * b.elite;
-    b.enemies.push({ id: b.nid++, type: s.type, x: s.x, y: -d.r, hp, max: hp, spd: d.spd, dmg: d.dmg * b.sc.dmg, r: d.r, ph: b.rng() * 6.283 });
-    if (s.w + 1 > b.wave) b.wave = s.w + 1;
+  if (b.done || b.choice) return;
+  b.t += DT; b.wt += DT;
+  while (b.idx < b.list.length && b.list[b.idx].w === b.wv && b.list[b.idx].t <= b.wt) {
+    const s = b.list[b.idx++], d = ENEMY[s.type], hp = d.hp * b.sc.hp * b.elite * (s.type === 'boss' ? b.bossMul : 1);
+    b.enemies.push({ id: b.nid++, type: s.type, x: s.x, y: -d.r, hp, max: hp, spd: d.spd, dmg: d.dmg * b.sc.dmg, r: d.r, ph: b.rng() * 6.283, slow: 0 });
+    b.lastSpawn = b.wt;
   }
-  // 영웅 이동: 자동이면 방벽에 가장 가까운 적을 쫓고, 수동이면 손가락 위치로
+  // 게이트: 웨이브마다 한 쌍
+  if (!b.gate && b.gateW !== b.wv && b.wt >= GATE_T) { b.gate = makeGate(b); b.gateW = b.wv; }
+  if (b.gate) {
+    b.gate.y += GATE_SPD * DT;
+    if (b.gate.y >= GATE_Y) {
+      const gt = b.hx < W / 2 ? b.gate.l : b.gate.r, before = b.squad;
+      b.squad = gateApply(b.squad, gt);
+      if (b.fx) b.fx('gate', null, b.squad - before, false, gt);
+      b.gate = null;
+    }
+  }
+  // 영웅 이동: 게이트가 가까우면 더 좋은 쪽으로, 아니면 방벽에 가장 가까운 적을 쫓음. 수동이면 손가락 위치로
   let tx = b.hx;
   if (b.auto) {
-    let best = null;
-    for (const e of b.enemies) if (e.y > 0 && (!best || e.y > best.y)) best = e;
-    if (best) tx = best.x;
+    if (b.gate && b.gate.y > GATE_Y - 230) {
+      const l = gateApply(b.squad, b.gate.l), r = gateApply(b.squad, b.gate.r);
+      tx = l > r ? W * 0.25 : r > l ? W * 0.75 : b.hx < W / 2 ? W * 0.25 : W * 0.75;
+    } else {
+      let best = null;
+      for (const e of b.enemies) if (e.y > 0 && (!best || e.y > best.y)) best = e;
+      if (best) tx = best.x;
+    }
   } else if (b.inputX != null) tx = b.inputX;
   const sp = (b.auto ? 280 : 520) * DT, dx = tx - b.hx;
   b.hx = clamp(b.hx + (Math.abs(dx) <= sp ? dx : Math.sign(dx) * sp), 14, W - 14);
   // 사격
   b.cd -= DT;
-  if (b.cd <= 0) { b.bullets.push({ x: b.hx, y: HERO_Y - 18, p: b.cs.pierce, hit: null, dead: false }); b.cd += 1 / b.cs.rate; }
+  if (b.cd <= 0) { shoot(b); b.cd += 1 / b.cs.rate; }
   for (const bl of b.bullets) {
-    bl.y -= 780 * DT;
+    bl.y -= 780 * DT; bl.x += bl.vx * DT;
     for (const e of b.enemies) {
       if (bl.dead) break;
       if (e.hp <= 0 || (bl.hit && bl.hit.includes(e.id))) continue;
       if (Math.abs(bl.x - e.x) < e.r + 3 && Math.abs(bl.y - e.y) < e.r + 8) {
-        const crit = b.rng() < b.cs.crit;
-        hurt(b, e, b.cs.atk * (crit ? 1.6 : 1), crit, 'shot');
+        const crit = b.rng() < b.cs.crit, big = e.type === 'golem' || e.type === 'boss';
+        hurt(b, e, b.cs.atk * bl.dm * (crit ? b.cs.critMul : 1) * (big ? 1 + b.cs.giant : 1), crit, bl.ally ? 'ally' : 'shot');
+        if (b.cs.chain && b.rng() < b.cs.chain) {
+          let nb = null, nd = 140 * 140;
+          for (const o of b.enemies) { if (o === e || o.hp <= 0) continue; const dd = (o.x - e.x) ** 2 + (o.y - e.y) ** 2; if (dd < nd) { nd = dd; nb = o; } }
+          if (nb) { if (b.fx) b.fx('chain', e, 0, false, nb); hurt(b, nb, b.cs.atk * bl.dm, false, 'chain'); }
+        }
         if (bl.p > 0) { bl.p--; (bl.hit || (bl.hit = [])).push(e.id); } else bl.dead = true;
       }
     }
-    if (bl.y < -20) bl.dead = true;
+    if (bl.y < -20 || bl.x < -10 || bl.x > W + 10) bl.dead = true;
   }
   // 지혜의 파동: 화면 안의 모든 적에게 피해
   b.waveT -= DT;
   if (b.waveT <= 0) {
     let any = false;
-    for (const e of b.enemies) if (e.y > 0 && e.hp > 0) { any = true; hurt(b, e, b.cs.wave, false, 'wave'); }
+    for (const e of b.enemies) if (e.y > 0 && e.hp > 0) { any = true; hurt(b, e, b.cs.wave, false, 'wave'); if (b.cs.frost) e.slow = 2; }
     if (any) { b.waveT = b.cs.waveCd; if (b.fx) b.fx('wave'); } else b.waveT = 0.2;
   }
   for (const e of b.enemies) {
     if (e.hp <= 0) continue;
-    e.y += e.spd * DT;
+    e.y += e.spd * (e.slow > 0 ? 1 - b.cs.frost : 1) * DT;
+    if (e.slow > 0) e.slow -= DT;
     if (e.type === 'bat') { e.ph += DT * 3; e.x = clamp(e.x + Math.cos(e.ph) * 40 * DT, 16, W - 16); }
-    if (e.y >= WALL_Y - e.r * 0.4) { b.wall -= e.dmg; e.hp = 0; if (b.fx) b.fx('wallhit', e); }
+    if (e.y >= WALL_Y - e.r * 0.4) { b.wall -= e.dmg * b.cs.wallMul; e.hp = 0; if (b.fx) b.fx('wallhit', e); }
   }
   if (b.cs.regen) b.wall = Math.min(b.wallMax, b.wall + b.wallMax * b.cs.regen * DT);
   b.enemies = b.enemies.filter((e) => e.hp > 0);
   b.bullets = b.bullets.filter((x) => !x.dead);
+  const spawned = b.idx >= b.list.length || b.list[b.idx].w > b.wv;
   if (b.wall <= 0) { b.wall = 0; b.done = true; b.win = false; }
-  else if (b.idx >= b.list.length && b.enemies.length === 0) { b.done = true; b.win = true; }
+  else if (spawned && b.wv >= b.nW - 1 && b.enemies.length === 0) { b.done = true; b.win = true; }
+  else if (spawned && b.wv < b.nW - 1 && (b.enemies.length === 0 || b.wt - b.lastSpawn >= 3)) startPick(b);
   else if (b.t > 400) { b.done = true; b.win = false; }
 }
 
-function simulate(b) { while (!b.done) step(b); return b; }
-function winRate(p, tile, seed, n) {
+// 자동으로 끝까지: 스킬 선택도 자동전투와 같은 규칙(autoPick)으로 고름
+function simulate(b) { while (!b.done) { if (b.choice) chooseSkill(b, autoPick(b)); else step(b); } return b; }
+function winRate(p, tile, seed, n, opt) {
   let w = 0;
-  for (let k = 0; k < n; k++) if (simulate(newBattle(p, tile, (seed + 1000 + k * 7919) >>> 0, true)).win) w++;
+  for (let k = 0; k < n; k++) if (simulate(newBattle(p, tile, (seed + 1000 + k * 7919) >>> 0, true, opt)).win) w++;
   return w / n;
 }
 
@@ -764,6 +905,41 @@ function dayStreak(q) {
   }
   return n;
 }
+// ===== 나쁜 습관 보스: 이번 주 루틴 완료 1개 = 1 피해, 이번 주 예정 루틴의 80%를 하면 처치 =====
+// 깎은 비율만큼 지도의 주간 보스 체력도 줄어듦(최대 50%). 보상은 골드·입장권만 (레벨·능력치는 루틴으로만)
+const HABIT_RATIO = 0.8, HABIT_WEAKEN = 0.5, HABIT_REWARD = { gold: 150, tickets: 2 };
+function weekScheduled(q, ws) {
+  let n = 0;
+  for (let k = 0; k < 7; k++) {
+    const d = addDays(ws, k);
+    if (d <= q.today) { for (const x of q.quests) if (x.date === d) n++; continue; }
+    for (const r of q.routines) {
+      if (!r.active || !r.days.includes(dow(d)) || d < r.created) continue;
+      const goal = r.goalId ? q.goals.find((g) => g.id === r.goalId) : null;
+      if (r.goalId && (!goal || d < goal.start || d > goal.end)) continue;
+      n++;
+    }
+  }
+  return n;
+}
+function habitWeek(q) {
+  const ws = weekStartOf(q.today), we = addDays(ws, 6), sched = weekScheduled(q, ws);
+  const hp = Math.max(1, Math.ceil(sched * HABIT_RATIO));
+  let dmg = 0;
+  for (const x of q.quests) if (x.status === 'done' && x.date >= ws && x.date <= we) dmg++;
+  dmg = Math.min(dmg, hp);
+  return { ws, sched, hp, dmg, left: hp - dmg, dead: dmg >= hp, claimed: !!(q.bossLog && q.bossLog[ws]), weaken: HABIT_WEAKEN * (dmg / hp) };
+}
+// 오늘 완료한 루틴의 능력치별 횟수 → 전투 스킬 풀
+function todayPool(q) {
+  const pool = {};
+  for (const x of q.quests) {
+    if (x.date !== q.today || x.status !== 'done') continue;
+    const r = q.routines.find((y) => y.id === x.rid);
+    if (r) pool[r.stat] = (pool[r.stat] || 0) + 1;
+  }
+  return pool;
+}
 // ===== 퀘스트 엔진 끝 =====
 
 
@@ -786,6 +962,12 @@ const STAT = {
   dex: { name: '유연', code: 'DEX', eff: '연사 속도·치명타', routine: '스트레칭 10분' },
 };
 const TICKET_MAX = 10;
+const CAT_COLOR = { base: '--r0', str: '--str', int: '--int', dex: '--dex', vit: '--vit' };
+const CAT_ICON = {
+  base: ICON.armor, str: ICON.weapon, int: ICON.charm,
+  dex: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6l6 6-6 6M13 6l6 6-6 6"/></svg>',
+  vit: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linejoin="round"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>',
+};
 const cssCache = {};
 const css = (n) => cssCache[n] || (cssCache[n] = getComputedStyle(document.documentElement).getPropertyValue(n).trim());
 const fmt = (n) => Math.round(n).toLocaleString('ko-KR');
@@ -811,6 +993,14 @@ let S = freshState();
 // ===== 진행 상태 =====
 const curTile = () => { const k = S.cleared.indexOf(false); return k < 0 ? TILES.length : k; };
 const myCp = () => cpOf(S);
+// 나쁜 습관 보스: 사용자가 이름·모습을 정하고, 지도 주간 보스가 그 이름으로 나옴 (주차가 갈수록 각성)
+const habitOf = () => (S.q && S.q.habit) || { name: CHAPTERS[0].boss, art: 0, named: false };
+function bossNameFor(ch) { const n = habitOf().name; return ch === 0 ? n : `${n} · ${['', '각성', '최종'][ch]}`; }
+const bossArt = () => BOSS[habitOf().art] || BOSS[0];
+function battleOpt(t) {
+  const q = Q();
+  return { pool: q ? todayPool(q) : {}, bossMul: t.type === 'boss' && q ? 1 - habitWeek(q).weaken : 1, bossName: bossNameFor(t.ch) };
+}
 function tileLabel(t) { return t.type === 'gate' ? `관문 Lv.${t.gate}` : t.type === 'boss' ? '보스' : TILE_INFO[t.type].name.replace(' 칸', '').replace('일반 ', ''); }
 function tileDesc(t) {
   return {
@@ -818,7 +1008,7 @@ function tileDesc(t) {
     gold: '적이 조금 더 많지만 골드를 4배로 줘요.',
     chest: '첫 클리어 때 장비 상자를 확정으로 줘요.',
     gate: `Lv.${t.gate} 이상만 들어갈 수 있어요. 적이 30% 더 단단해요. 장비로는 못 넘고 루틴으로 레벨을 올려야 열려요.`,
-    boss: `웨이브 3번 뒤에 주간 보스 '${CHAPTERS[t.ch].boss}'이(가) 나와요. 첫 클리어 때 희귀 이상 장비를 줘요.`,
+    boss: `웨이브 3번 뒤에 나쁜 습관 보스 '${bossNameFor(t.ch)}'이(가) 나와요. 이번 주 루틴을 할수록 보스 체력이 줄어요(최대 50%). 첫 클리어 때 희귀 이상 장비를 줘요.`,
   }[t.type];
 }
 
@@ -850,10 +1040,11 @@ function renderMap() {
   let h = '';
   if (cur >= TILES.length) h += '<div class="note">3주 지도를 모두 깼어요. 깬 칸은 계속 파밍할 수 있어요.</div>';
   if (S.tickets === 0) h += '<div class="note">입장권이 없어요. 오늘 탭에서 퀘스트를 완료하면 1장씩 받아요.</div>';
+  h += habitHtml();
   CHAPTERS.forEach((c, ci) => {
     const tiles = TILES.filter((t) => t.ch === ci);
     const done = tiles.filter((t) => S.cleared[t.i]).length;
-    h += `<section class="sec"><div class="sec-h"><h2>${c.name} · ${c.boss}</h2><span class="sub num">${done}/${tiles.length}</span></div><div class="grid">`;
+    h += `<section class="sec"><div class="sec-h"><h2>${c.name} · ${esc(bossNameFor(ci))}</h2><span class="sub num">${done}/${tiles.length}</span></div><div class="grid">`;
     // 뱀 모양 경로: 둘째 줄은 오른쪽에서 왼쪽으로
     const order = [...tiles.slice(0, 4), ...tiles.slice(4).reverse()];
     for (const t of order) {
@@ -861,7 +1052,7 @@ function renderMap() {
       const lvShort = t.gate && S.level < t.gate && !S.cleared[t.i];
       const rec = REC_CP[t.i];
       h += `<button class="tile t-${t.type} ${st}" data-tile="${t.i}" aria-label="${ci + 1}주차 ${t.j + 1}번째 칸, ${tileLabel(t)}">
-        <span class="tn num">${t.j + 1}</span>${t.type === 'boss' ? artInline(BOSS[t.ch], 'tart') : ICON[t.type]}<span class="tl">${tileLabel(t)}</span>
+        <span class="tn num">${t.j + 1}</span>${t.type === 'boss' ? artInline(bossArt(), 'tart') : ICON[t.type]}<span class="tl">${tileLabel(t)}</span>
         ${lvShort && st === 'current' ? `<span class="need">Lv.${t.gate} 필요</span>` : `<span class="tc num ${st !== 'cleared' && cp < rec ? 'badc' : ''}">권장 ${fmt(rec)}</span>`}
       </button>`;
     }
@@ -869,6 +1060,40 @@ function renderMap() {
   });
   h += `<div class="legend"><span>${ICON.battle}일반</span><span class="r3">${ICON.gold}보물(골드 4배)</span><span class="r2">${ICON.chest}상자(장비)</span><span class="r1">${ICON.gate}관문(레벨 제한)</span><span style="color:var(--danger)">${ICON.boss}주간 보스</span></div>`;
   $('view').innerHTML = h;
+}
+
+function habitHtml() {
+  const q = Q(); if (!q) return '';
+  const hb = habitOf(), w = habitWeek(q), kills = Object.keys(q.bossLog || {}).length;
+  let h = `<section class="sec"><div class="card habit"><div class="hb-art">${artInline(bossArt(), '')}</div>
+    <div class="grow" style="display:flex;flex-direction:column;gap:5px;min-width:0"><div class="eyebrow">이번 주 나쁜 습관 보스</div>
+    <div class="row"><b class="hb-name grow">${esc(hb.name)}</b><button class="btn xs ${hb.named ? '' : 'pri'}" data-act="habitname">${hb.named ? '바꾸기' : '이름 짓기'}</button></div>
+    <div class="bar hbar"><i style="width:${(w.left / w.hp) * 100}%"></i></div>
+    <div class="sub num">체력 ${w.left} / ${w.hp} · 루틴 1개 완료 = 1 피해</div></div></div>
+    <div class="sub">이번 주 예정 루틴 ${w.sched}개 중 ${w.hp}개를 하면 처치해요. 깎은 만큼 지도의 주간 보스 체력도 줄어요 (지금 −${Math.round(w.weaken * 100)}%, 최대 −${HABIT_WEAKEN * 100}%).</div>`;
+  if (w.dead && !w.claimed) h += `<button class="btn pri" data-act="habitclaim">${esc(hb.name)} 처치! 보상 받기 (골드 +${HABIT_REWARD.gold} · 입장권 +${HABIT_REWARD.tickets})</button>`;
+  else if (w.claimed) h += `<div class="sub okc">이번 주 ${esc(hb.name)}을(를) 처치했어요${kills > 1 ? ` · 지금까지 ${kills}번 처치` : ''}</div>`;
+  return h + '</section>';
+}
+function openHabitName() {
+  const hb = habitOf();
+  openModal(`<div class="eyebrow">나쁜 습관 보스</div><div class="big">고치고 싶은 습관에 이름을 붙여요</div>
+    <div class="sub">매주 이 보스가 다시 나타나요. 루틴을 완료할 때마다 1씩 깎이고, 지도의 주간 보스도 이 이름으로 나와요.</div>
+    <label class="fld">보스 이름<input class="inp" id="hbName" maxlength="12" value="${esc(hb.name)}"></label>
+    <div class="presets">${['늦잠 드래곤', '야식 대마왕', '폰중독 리치', '미루기 대마왕', '작심삼일 슬라임'].map((n) => `<button class="btn xs" data-hbpreset="${n}">${n}</button>`).join('')}</div>
+    <div class="fld">모습<div class="hbarts">${BOSS.map((a, k) => `<label class="hbart"><input type="radio" name="hbArt" value="${k}" ${k === hb.art ? 'checked' : ''}><span>${artInline(a, '')}</span></label>`).join('')}</div></div>
+    <button class="btn pri" data-act="habitsave">저장</button><button class="btn" data-act="close">닫기</button>`);
+}
+function saveHabit() {
+  const q = Q(), name = ($('hbName').value || '').trim().slice(0, 12), art = $('modal').querySelector('input[name="hbArt"]:checked');
+  q.habit = { name: name || habitOf().name, art: art ? +art.value : habitOf().art, named: true };
+  save(); closeModal(); render(); toast(`이번 주 보스: ${q.habit.name}`);
+}
+function claimHabit() {
+  const q = Q(), w = habitWeek(q); if (!w.dead || w.claimed) return;
+  (q.bossLog || (q.bossLog = {}))[w.ws] = { name: habitOf().name, at: q.today };
+  const g = grant(HABIT_REWARD); save(); render();
+  rewardToast(`${habitOf().name} 처치! 골드 +${HABIT_REWARD.gold} · 입장권 +${HABIT_REWARD.tickets}`, g);
 }
 
 function itemStatText(it) {
@@ -986,7 +1211,9 @@ function fitCanvas() {
 function battleFx(kind, e, dm, crit, src) {
   if (kind === 'dmg') e.fl = 0.12;
   if (kind === 'dmg' && src === 'shot') fxs.push({ k: 'num', x: e.x + (Math.random() - 0.5) * 10, y: e.y - e.r, v: Math.round(dm), crit, t: 0 });
-  if (kind === 'dmg' && src === 'wave') fxs.push({ k: 'num', x: e.x, y: e.y - e.r, v: Math.round(dm), wave: true, t: 0 });
+  if (kind === 'dmg' && (src === 'wave' || src === 'chain')) fxs.push({ k: 'num', x: e.x, y: e.y - e.r, v: Math.round(dm), wave: true, t: 0 });
+  if (kind === 'chain') fxs.push({ k: 'chain', x1: e.x, y1: e.y, x2: src.x, y2: src.y, t: 0 });
+  if (kind === 'gate') { fxs.push({ k: 'gtxt', v: dm, txt: gateText(src), t: 0 }); if (dm > 0) tone(880, 'triangle', 0.12, 0, 0.08); }
   if (kind === 'kill') for (let k = 0; k < 7; k++) { const a = Math.random() * 6.283, v = 40 + Math.random() * 80; fxs.push({ k: 'pt', x: e.x, y: e.y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, t: 0, c: enemyColor(e.type) }); }
   if (kind === 'wallhit') { shake = 0.25; fxs.push({ k: 'hit', x: e.x, t: 0 }); }
   if (kind === 'wave') fxs.push({ k: 'ring', t: 0 });
@@ -995,13 +1222,35 @@ function enemyColor(type) { return { slime: '#7fd1b9', bat: '#9b87f5', golem: '#
 
 function openBattle(tile, auto) {
   const seed = S.seed++; S.tickets--; save();
-  B = newBattle(S, tile, seed, auto); B.fx = battleFx; B.first = !S.cleared[tile.i];
-  fxs = []; acc = 0; speed = 1; shake = 0; manualToast = false; finishing = false;
+  B = newBattle(S, tile, seed, auto, battleOpt(tile)); B.fx = battleFx; B.first = !S.cleared[tile.i]; B.art = habitOf().art;
+  fxs = []; acc = 0; speed = 1; shake = 0; manualToast = false; finishing = false; pickShown = false;
+  $('bPick').hidden = true; renderSkillHud();
   $('bTitle').textContent = `${CHAPTERS[tile.ch].name} ${tile.j + 1}번째 칸 · ${TILE_INFO[tile.type].name}`;
   $('battle').hidden = false; closeModal(); updateBattleCtl();
   fitCanvas(); last = performance.now(); cancelAnimationFrame(raf); raf = requestAnimationFrame(loop);
 }
+// ===== 웨이브 스킬 선택 화면: 자동전투면 잠깐 보여 준 뒤 자동으로 고름(결과만 보기와 같은 선택) =====
+const PICK_WAIT = 1.6;
+let pickShown = false, pickT = 0;
+function showPick() {
+  pickShown = true; pickT = 0;
+  const auto = autoPick(B), pool = B.pool, cats = ['str', 'int', 'dex', 'vit'].filter((k) => pool[k] > 0);
+  $('bPick').innerHTML = `<h3>스킬 선택 · 웨이브 ${B.wv + 2}/${B.nW}</h3>
+    <div class="psub">${cats.length ? `오늘 한 루틴 덕분에 ${cats.map((k) => SKILL_CAT[k].name).join('·')} 스킬이 ★강화돼요` : '오늘 루틴을 하면 그 능력치의 스킬이 ★강화돼요'}</div>
+    ${B.choice.map((id) => { const k = SKILLS[id], n = B.sk[id] || 0, m = skillMul(B, id); return `<button class="pcard ${id === auto ? 'auto' : ''} ${m > 1 ? 'star' : ''}" data-pick="${id}" style="--c:var(${CAT_COLOR[k.cat]})"><span class="pic">${CAT_ICON[k.cat]}</span><span><span class="pcat">${SKILL_CAT[k.cat].name}${m > 1 ? ' ★강화' : ''}${k.max > 1 ? ` · Lv.${n + 1}/${k.max}` : ''}</span><br><b>${k.name}</b><small>${k.txt(m)}</small></span></button>`; }).join('')}
+    <div class="pbar"><i id="pBarI"></i></div><div class="psub" id="pHint"></div>`;
+  $('bPick').hidden = false; pickHint();
+}
+function pickHint() { const el = $('pHint'); if (el) el.textContent = B.auto ? '자동전투: 노란 테두리 스킬을 곧 골라요. 직접 눌러도 돼요' : '하나를 눌러 고르세요'; }
+function pickSkill(id) {
+  if (!B || !B.choice) return;
+  chooseSkill(B, id); pickShown = false; $('bPick').hidden = true; renderSkillHud();
+}
+function renderSkillHud() {
+  $('bSkills').innerHTML = B ? Object.keys(B.sk).map((id) => { const k = SKILLS[id]; return `<span style="--c:var(${CAT_COLOR[k.cat]})">${skillMul(B, id) > 1 ? '★' : ''}${k.name}${B.sk[id] > 1 ? ' ' + B.sk[id] : ''}</span>`; }).join('') : '';
+}
 function updateBattleCtl() {
+  if (pickShown) pickHint();
   $('bAuto').textContent = B.auto ? '자동전투 켜짐' : '자동전투 꺼짐';
   $('bAuto').classList.toggle('on', B.auto);
   $('bSpeed').textContent = speed + '배속';
@@ -1010,11 +1259,17 @@ function updateBattleCtl() {
 function loop(now) {
   if (!B) return;
   let dt = Math.min(0.1, (now - last) / 1000); last = now;
-  acc += dt * speed;
-  while (acc >= DT && !B.done) { step(B); acc -= DT; }
+  if (B.choice) {
+    acc = 0;
+    if (!pickShown) showPick();
+    if (B.auto) { pickT += dt * speed; const bi = $('pBarI'); if (bi) bi.style.width = Math.min(100, (pickT / PICK_WAIT) * 100) + '%'; if (pickT >= PICK_WAIT) pickSkill(autoPick(B)); }
+  } else {
+    acc += dt * speed;
+    while (acc >= DT && !B.done && !B.choice) { step(B); acc -= DT; }
+  }
   for (const f of fxs) f.t += dt;
   for (const e of B.enemies) if (e.fl > 0) e.fl -= dt;
-  fxs = fxs.filter((f) => f.t < (f.k === 'ring' ? 0.5 : f.k === 'pt' ? 0.5 : 0.7));
+  fxs = fxs.filter((f) => f.t < ({ ring: 0.5, pt: 0.5, chain: 0.25, gtxt: 1.1 }[f.k] || 0.7));
   shake = Math.max(0, shake - dt);
   drawBattle(now / 1000);
   if (B.done && !finishing) { finishing = true; setTimeout(() => finishBattle(), 700); }
@@ -1029,6 +1284,18 @@ function drawBattle(time) {
   g.fillStyle = grd; g.fillRect(0, 0, W, 160);
   g.strokeStyle = 'rgba(255,255,255,.04)'; g.lineWidth = 1;
   for (let x = 45; x < W; x += 45) { g.beginPath(); g.moveTo(x, 0); g.lineTo(x, WALL_Y); g.stroke(); }
+  // 숫자 게이트
+  if (b.gate) {
+    g.textBaseline = 'middle'; g.textAlign = 'center';
+    [[0, b.gate.l], [1, b.gate.r]].forEach(([side, gt]) => {
+      const x0 = side ? W / 2 + 4 : 4, w = W / 2 - 8, bad = gt.op === '-', col = bad ? css('--danger') : css('--int');
+      g.globalAlpha = 0.32; g.fillStyle = col; roundRect(x0, b.gate.y - 19, w, 38, 9); g.fill();
+      g.globalAlpha = 1; g.strokeStyle = col; g.lineWidth = 2.5; g.stroke();
+      g.fillStyle = '#fff'; g.font = `24px ${css('--font-display')}`; g.fillText(gateText(gt), x0 + w / 2 - 14, b.gate.y + 1);
+      g.font = `700 11px ${css('--font-body')}`; g.fillStyle = '#c9c3ef'; g.fillText('궁수', x0 + w / 2 + 26, b.gate.y + 1);
+    });
+    g.textBaseline = 'alphabetic';
+  }
   // 적
   for (const e of b.enemies) drawEnemy(e, time);
   // 방벽
@@ -1037,13 +1304,19 @@ function drawBattle(time) {
   g.globalAlpha = 1;
   g.fillStyle = 'rgba(255,255,255,.05)'; g.fillRect(0, WALL_Y + 14, W, H - WALL_Y);
   // 탄
-  g.strokeStyle = css('--gold'); g.lineWidth = 3; g.lineCap = 'round';
-  for (const bl of b.bullets) { g.beginPath(); g.moveTo(bl.x, bl.y); g.lineTo(bl.x, bl.y + 10); g.stroke(); }
+  g.lineCap = 'round';
+  for (const bl of b.bullets) {
+    g.strokeStyle = bl.ally ? '#fff1b8' : css('--gold'); g.lineWidth = bl.ally ? 2 : 3;
+    g.beginPath(); g.moveTo(bl.x, bl.y); g.lineTo(bl.x - (bl.vx / 780) * 10, bl.y + 10); g.stroke();
+  }
+  for (let k = b.squad - 1; k >= 0; k--) drawHero(g, allyX(b, k), HERO_Y + 12, 0.55, b.cs.cls, time + k * 0.37);
   drawHero(g, b.hx, HERO_Y, 1.1, b.cs.cls, time);
   // 효과
   for (const f of fxs) {
     if (f.k === 'pt') { g.globalAlpha = 1 - f.t / 0.5; g.fillStyle = f.c; g.fillRect(f.x + f.vx * f.t - 2, f.y + f.vy * f.t - 2, 4, 4); }
     if (f.k === 'hit') { g.globalAlpha = 1 - f.t / 0.7; g.fillStyle = css('--danger'); g.fillRect(f.x - 20, WALL_Y - 4, 40, 20); }
+    if (f.k === 'chain') { g.globalAlpha = 1 - f.t / 0.25; g.strokeStyle = '#bfe0ff'; g.lineWidth = 2.5; g.beginPath(); g.moveTo(f.x1, f.y1); g.lineTo((f.x1 + f.x2) / 2 + 8, (f.y1 + f.y2) / 2 - 6); g.lineTo(f.x2, f.y2); g.stroke(); }
+    if (f.k === 'gtxt') { g.globalAlpha = 1 - f.t / 1.1; g.textAlign = 'center'; g.font = `22px ${css('--font-display')}`; g.fillStyle = f.v > 0 ? css('--gold') : f.v < 0 ? css('--danger') : '#c9c3ef'; g.fillText(`궁수 ${f.txt}${f.v === 0 ? ' (변화 없음)' : ''}`, b.hx, HERO_Y - 54 - f.t * 30); }
     if (f.k === 'ring') { g.globalAlpha = 1 - f.t / 0.5; g.strokeStyle = css('--int'); g.lineWidth = 4; g.beginPath(); g.arc(b.hx, HERO_Y, 40 + f.t * 1100, 0, 7); g.stroke(); }
     if (f.k === 'num') {
       g.globalAlpha = 1 - f.t / 0.7; g.textAlign = 'center';
@@ -1055,7 +1328,7 @@ function drawBattle(time) {
   g.globalAlpha = 1;
   g.restore();
   // HUD
-  $('bWave').textContent = `웨이브 ${Math.max(1, b.wave)}/${b.nW} · 처치 ${b.kills}`;
+  $('bWave').textContent = `웨이브 ${Math.max(1, b.wave)}/${b.nW} · 처치 ${b.kills} · 궁수 ${b.squad}`;
   $('bWallI').style.width = Math.max(0, ratio * 100) + '%';
   $('bWallI').style.background = wc;
   $('bWallT').textContent = `방벽 ${fmt(b.wall)} / ${fmt(b.wallMax)}`;
@@ -1063,7 +1336,7 @@ function drawBattle(time) {
 function roundRect(x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 const FOE_SIZE = { slime: 44, bat: 44, golem: 56, ghost: 46, boss: 108 };
 function drawEnemy(e, time) {
-  const r = e.r, im = SPR[e.type === 'boss' ? 'b-' + B.tile.ch : 'm-' + e.type];
+  const r = e.r, im = SPR[e.type === 'boss' ? 'b-' + B.art : 'm-' + e.type];
   g.save(); g.translate(e.x, e.y);
   if (ready(im)) {
     const sz = FOE_SIZE[e.type], ph = time + e.id * 0.7;
@@ -1073,6 +1346,7 @@ function drawEnemy(e, time) {
     else if (e.type === 'ghost') { g.translate(0, Math.sin(ph * 4) * 3); g.globalAlpha = 0.92; }
     else g.translate(0, Math.sin(ph * 2) * 2);
     g.drawImage(im, -sz / 2, -sz / 2, sz, sz);
+    if (e.slow > 0) { g.globalAlpha = 0.3; g.fillStyle = '#9fd0ff'; g.beginPath(); g.arc(0, 0, sz * 0.42, 0, 7); g.fill(); g.globalAlpha = 1; }
     if (e.fl > 0) { g.globalAlpha = Math.min(0.45, e.fl * 4); g.globalCompositeOperation = 'lighter'; g.drawImage(im, -sz / 2, -sz / 2, sz, sz); g.globalCompositeOperation = 'source-over'; }
   } else {
     g.fillStyle = enemyColor(e.type); g.beginPath(); g.arc(0, 0, r, 0, 7); g.fill();
@@ -1091,6 +1365,7 @@ function takeControl(ev) {
 $('bAuto').onclick = () => { if (!B || B.done) return; B.auto = !B.auto; B.inputX = B.hx; updateBattleCtl(); };
 $('bSpeed').onclick = () => { if (!B) return; speed = speed === 1 ? 2 : speed === 2 ? 3 : 1; updateBattleCtl(); };
 $('bSkip').onclick = () => { if (!B || B.done) return; B.auto = true; B.fx = null; simulate(B); finishing = true; finishBattle(); };
+$('bPick').addEventListener('click', (ev) => { const el = ev.target.closest('[data-pick]'); if (el) { ev.stopPropagation(); pickSkill(el.dataset.pick); } });
 window.addEventListener('resize', () => { if (B) fitCanvas(); });
 
 function finishBattle() {
@@ -1101,7 +1376,7 @@ function finishBattle() {
 // 결과만 보기: 화면 없이 같은 엔진으로 자동전투를 끝까지 돌림 → 자동전투를 끝까지 본 것과 결과가 같음
 function skipBattle(tile) {
   const seed = S.seed++; S.tickets--;
-  const b = newBattle(S, tile, seed, true); b.first = !S.cleared[tile.i];
+  const b = newBattle(S, tile, seed, true, battleOpt(tile)); b.first = !S.cleared[tile.i];
   simulate(b);
   showResult(applyResult(b), b);
 }
@@ -1137,13 +1412,14 @@ function openTile(i) {
   let h = `<div class="eyebrow">${CHAPTERS[t.ch].name} · ${t.j + 1}번째 칸${first ? '' : ' · 이미 깬 칸'}</div>
     <div class="row"><div class="ic" style="width:28px;color:${t.type === 'gold' ? 'var(--gold)' : t.type === 'chest' ? 'var(--r2)' : t.type === 'gate' ? 'var(--int)' : t.type === 'boss' ? 'var(--danger)' : 'var(--fg)'}">${ICON[t.type]}</div><div class="big">${TILE_INFO[t.type].name}</div></div>
     <div class="sub">${tileDesc(t)}${first ? '' : ' 다시 하면 보상이 35%로 줄어요(파밍).'}</div>
-    <div class="foes">${foesOf(t).map((k) => k === 'boss' ? `<span class="foe boss">${artInline(BOSS[t.ch], '')}<small>${CHAPTERS[t.ch].boss}</small></span>` : `<span class="foe">${artInline(MON[k], '')}<small>${ENEMY[k].name}</small></span>`).join('')}</div>
+    <div class="foes">${foesOf(t).map((k) => k === 'boss' ? `<span class="foe boss">${artInline(bossArt(), '')}<small>${esc(bossNameFor(t.ch))}</small></span>` : `<span class="foe">${artInline(MON[k], '')}<small>${ENEMY[k].name}</small></span>`).join('')}</div>
     <dl class="kv" style="margin:0">
       <div><dt>권장 전투력</dt><dd class="num">${fmt(rec)}</dd></div>
       <div><dt>내 전투력</dt><dd class="num ${cp >= rec ? 'okc' : 'badc'}">${fmt(cp)}</dd></div>
       <div><dt>자동전투 예상 승률</dt><dd class="num" id="wr">계산 중…</dd></div>
       <div><dt>승리 보상</dt><dd class="num" style="font-size:13px">골드 ${fmt(r.gold)}<br><span class="sub">${itemTxt}</span></dd></div>
-    </dl>`;
+    </dl>${poolHtml()}`;
+  if (t.type === 'boss') { const w = habitWeek(Q()); h += `<div class="sub">이번 주 루틴 ${w.dmg}개로 보스 체력 <b class="${w.weaken > 0 ? 'okc' : ''}">−${Math.round(w.weaken * 100)}%</b> (최대 −${HABIT_WEAKEN * 100}%)</div>`; }
   if (lvBlock) h += `<div class="warn">Lv.${t.gate} 이상만 들어갈 수 있어요. 지금 Lv.${S.level}이에요. 루틴을 완료해 레벨을 올려주세요.</div>`;
   else if (noTicket) h += '<div class="warn">입장권이 없어요. 루틴을 1개 완료하면 1장 받아요.</div>';
   else h += `<div class="sub">입장권 1장을 써요 (남은 입장권 ${S.tickets}장). 결과만 보기는 자동전투를 끝까지 본 것과 같은 결과가 나와요.</div>`;
@@ -1159,12 +1435,24 @@ function openTile(i) {
   $('modal').querySelector('.sheet').dataset.tile = i;
   setTimeout(() => {
     const el = $('wr'); if (!el) return;
-    const w = winRate(S, t, S.seed, 16);
+    const w = winRate(S, t, S.seed, 16, battleOpt(t));
     el.textContent = Math.round(w * 100) + '%';
     el.className = 'num ' + (w >= 0.7 ? 'okc' : w < 0.4 ? 'badc' : '');
   }, 30);
 }
 
+// 오늘의 스킬 강화: 오늘 완료한 루틴의 능력치에 해당하는 스킬이 ★강화 (1번 1.5배, 2번 이상 1.75배)
+function poolHtml() {
+  const q = Q(); if (!q) return '';
+  const pool = todayPool(q), miss = ['str', 'int', 'dex', 'vit'].filter((k) => !pool[k]);
+  let h = `<div class="sub">웨이브마다 스킬 3개 중 1개를 골라요. <b>오늘 한 루틴</b>의 능력치 스킬은 ★강화돼요. 숫자 게이트를 지나면 동료 궁수가 늘거나 줄어요.</div>
+    <div class="pchips">${['str', 'int', 'dex', 'vit'].map((k) => pool[k] ? `<span class="tag tstat" style="--c:var(--${k})">★ ${SKILL_CAT[k].name} ×${STAR[Math.min(2, pool[k])]}</span>` : `<span class="tag">${SKILL_CAT[k].name} 기본</span>`).join('')}</div>`;
+  if (miss.length) {
+    const k = miss[0], rr = q.routines.find((r) => r.stat === k && r.active);
+    h += `<div class="sub">${rr ? `오늘 '${esc(rr.title)}'을(를) 하면` : `${STAT[k].name} 루틴을 하면`} ${SKILL_CAT[k].name} 스킬(${Object.values(SKILLS).filter((x) => x.cat === k).map((x) => x.name).slice(0, 2).join('·')} 등)이 ★강화돼요.</div>`;
+  }
+  return h;
+}
 function foesOf(t) { const f = ['slime', 'bat']; if (t.ch > 0 || t.j >= 3) f.push('golem'); if (t.ch > 0) f.push('ghost'); if (t.type === 'boss') f.push('boss'); return f; }
 function weakestStat() { return ['str', 'int', 'vit', 'dex'].reduce((a, k) => (S[k] < S[a] ? k : a), 'str'); }
 function showResult(out, b) {
@@ -1176,7 +1464,8 @@ function showResult(out, b) {
       <div><dt>처치</dt><dd class="num">${b.kills}</dd></div>
       <div><dt>남은 방벽</dt><dd class="num">${Math.round((b.wall / b.wallMax) * 100)}%</dd></div>
       <div><dt>${out.win ? '획득 골드' : '위로금'}</dt><dd class="num" style="color:var(--gold)">+${fmt(out.gold)}</dd></div>
-    </dl>`;
+    </dl>
+    <div class="pchips">${b.picks.map((id) => `<span class="tag tstat" style="--c:var(${CAT_COLOR[SKILLS[id].cat]})">${skillMul(b, id) > 1 ? '★' : ''}${SKILLS[id].name}</span>`).join('')}<span class="tag tstat" style="--c:var(--gold)">궁수 ${b.squad}명</span></div>`;
   if (out.item) {
     const d = cpWith(out.item) - cp;
     h += `<div class="sub">장비 획득</div>${itemRow(out.item, d > 0 ? `<button class="btn sm pri" data-equip="${out.item.id}" data-close="1">장착 +${d}</button>` : '')}`;
@@ -1489,6 +1778,8 @@ function syncQuests() {
   if (!q.settings) q.settings = defaultSettings();
   if (!q.rewards) q.rewards = defaultRewards();
   if (q.snoozed === undefined) q.snoozed = null;
+  if (!q.habit) q.habit = { name: CHAPTERS[0].boss, art: 0, named: false };
+  if (!q.bossLog) q.bossLog = {};
   for (const g of q.goals) if (!g.mode) g.mode = 'ESCALATION';
   const rt = realToday();
   if (rt > q.today) q.today = rt;
@@ -1698,10 +1989,12 @@ function finishQuest(qid) {
   const r = routineOf(x.rid), el = $('amtV');
   const amt = el ? Math.max(0, +el.dataset.v) : x.amount;
   clearInterval(execTimer); cancelAnimationFrame(holdTimer);
+  const left0 = habitWeek(q).left;
   const rw = completeQuest(q, x, amt), g = grant({ ...rw, tickets: 1 }, r.stat);
+  const left1 = habitWeek(q).left, hb = left0 > 0 ? (left1 === 0 ? ` · ${q.habit.name} 처치!` : ` · ${q.habit.name} −1`) : '';
   if (q.snoozed && q.snoozed.qid === qid) q.snoozed = null;
   q.example = false; save(); closeModal(); render();
-  rewardToast(`${STAT[r.stat].name} +${rw.stat} · EXP +${rw.exp} · 골드 +${rw.gold} · 입장권 +1`, g);
+  rewardToast(`${STAT[r.stat].name} +${rw.stat} · EXP +${rw.exp} · 골드 +${rw.gold} · 입장권 +1${hb}`, g);
 }
 
 // ===== 새 루틴·목표 =====
@@ -2191,8 +2484,12 @@ document.addEventListener('click', (ev) => {
     S.shop.splice(+d.buy, 1); save(); render(); toast(`${it.name} 구매`);
     return;
   }
+  if (d.hbpreset) { $('hbName').value = d.hbpreset; return; }
   const a = d.act;
   if (a === 'close') closeModal();
+  else if (a === 'habitname') openHabitName();
+  else if (a === 'habitsave') saveHabit();
+  else if (a === 'habitclaim') claimHabit();
   else if (a === 'goroutine') { closeModal(); S.tab = 'today'; save(); render(); window.scrollTo(0, 0); }
   else if (a === 'enh') { const c = enhCost(); if (S.gold < c) return; S.gold -= c; S.enh++; save(); render(); toast(`무기 +${S.enh} 강화 성공`); }
   else if (a === 'reroll') { if (S.gold < 20) return; S.gold -= 20; ensureShop(true); render(); }
@@ -2215,7 +2512,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 
 <script>
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform())) {
-  navigator.serviceWorker.register('sw.js?v=cedc1cd628').catch(function () {});
+  navigator.serviceWorker.register('sw.js?v=a85ee62ad3').catch(function () {});
 }
 </script>
 </body></html>
