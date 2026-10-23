@@ -211,6 +211,48 @@ main { flex: 1; padding-block: 8px calc(96px + env(safe-area-inset-bottom, 0px))
 .avatar { display: flex; gap: 14px; align-items: center; }
 .avatar .ava-big { width: 112px; height: 112px; border-radius: 20px; background: var(--card2); border: 2px solid var(--edge); flex: none; }
 .avatar .ava-big svg { width: 100%; height: 100%; display: block; }
+.avatar .ava-big { position: relative; }
+.ava-pet { position: absolute; right: -8px; bottom: -8px; font-size: 34px; line-height: 1; filter: drop-shadow(0 2px 0 var(--edge)); }
+
+/* 2단계: 모험 일지 · 카드팩 · 영지 · 수집 · 공유 카드 */
+.journey { gap: 8px; }
+.jline { display: flex; align-items: flex-start; gap: 8px; font-size: 13px; line-height: 1.45; }
+.jline .je { font-size: 22px; line-height: 1; flex: none; }
+.jline .tag { flex: none; }
+.ev-art { font-size: 64px; line-height: 1; text-align: center; animation: pop2 .25s ease-out; }
+.packs { display: flex; gap: 8px; flex-wrap: wrap; }
+.packbtn { flex: 1 1 140px; text-align: center; padding: 9px 10px; border: 2px dashed var(--soft); border-radius: 12px; }
+.btn.packbtn { border-style: solid; }
+.pack { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pk { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center; padding: 12px 6px; background: var(--card); border: 2px solid var(--edge); border-radius: 14px; box-shadow: var(--sh-sm);
+  animation: flip .45s ease-out both; animation-delay: var(--d); }
+.pk .pe, .cc .pe { font-size: 40px; line-height: 1.1; }
+.pk b { font-size: 13px; line-height: 1.25; } .pk small { font-size: 11px; color: var(--dim); }
+@keyframes flip { from { transform: rotateY(90deg) scale(.85); opacity: 0; } }
+.rar1 { --rc: var(--int); } .rar2 { --rc: var(--gold); }
+.pk.rar1, .pk.rar2, .cc.rar1, .cc.rar2 { border-color: var(--rc); background: color-mix(in srgb, var(--rc) 12%, var(--card)); }
+b.rar1, b.rar2 { color: var(--rc); }
+.tag.new { background: var(--danger); color: #fff; border-color: var(--danger); }
+.estate { display: flex; flex-direction: column; gap: 10px; padding: 0; overflow: hidden; }
+.es-sky { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 16px 12px 10px; background: linear-gradient(color-mix(in srgb, var(--int) 16%, var(--card)), color-mix(in srgb, var(--vit) 16%, var(--card))); border-bottom: 2px solid var(--edge); }
+.es-home { position: relative; font-size: 72px; line-height: 1; }
+.es-pet { position: absolute; right: -34px; bottom: 0; font-size: 32px; animation: hop 1.6s ease-in-out infinite; }
+@keyframes hop { 50% { transform: translateY(-6px); } }
+.es-name { font-family: var(--font-display); font-size: 22px; }
+.es-blds { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; padding: 0 12px; }
+.bld { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 1px; padding: 8px 4px; border: 2px solid var(--edge); border-radius: 12px; background: color-mix(in srgb, var(--c) 14%, var(--card)); }
+.bld span { font-size: 26px; line-height: 1.1; } .bld b { font-size: 11.5px; line-height: 1.2; } .bld small { font-size: 10.5px; color: var(--dim); }
+.bld.off { border-style: dashed; border-color: var(--soft); background: var(--card2); } .bld.off span { filter: grayscale(1); opacity: .45; }
+.es-room { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 0 12px; font-size: 24px; }
+.es-room .sub { font-size: 12px; }
+.vault { padding: 10px 12px 12px; border-top: 2px dashed var(--soft); }
+.cgrid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6px; margin: 4px 0 10px; }
+.cc { display: flex; flex-direction: column; align-items: center; gap: 1px; padding: 8px 4px; text-align: center; font: inherit; color: var(--fg); background: var(--card); border: 2px solid var(--edge); border-radius: 12px; }
+.cc .pe { font-size: 28px; } .cc b { font-size: 11px; line-height: 1.25; font-weight: 700; } .cc small { font-size: 10px; color: var(--dim); }
+.cc.on { box-shadow: var(--sh-sm); outline: 3px solid var(--accent); outline-offset: -1px; }
+.cc.off { border-style: dashed; border-color: var(--soft); background: var(--card2); color: var(--dim); }
+.cc:disabled { opacity: 1; }
+.sharepic { width: 100%; border: 2px solid var(--edge); border-radius: 14px; display: block; }
 .cname { font-family: var(--font-display); font-size: 24px; line-height: 1.1; }
 .item { display: flex; align-items: center; gap: 10px; }
 .item .ic { width: 38px; height: 38px; border-radius: 10px; background: color-mix(in srgb, currentColor 12%, var(--card)); display: grid; place-items: center; flex: none; border: 2px solid currentColor; }
@@ -342,7 +384,7 @@ textarea.inp { min-height: 76px; resize: vertical; font-size: 12px; font-family:
     <div class="chips">
       <span class="chip c-gold" title="골드"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5" fill="none" stroke="#fff" stroke-width="2" opacity=".7"/></svg><b class="num" id="hGold">0</b></span>
       <span class="chip c-tk" title="입장권"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M3 7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v2.5a2.5 2.5 0 0 0 0 5V17a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-2.5a2.5 2.5 0 0 0 0-5z"/></svg><b class="num" id="hTk">0</b></span>
-      <span class="chip c-fire" title="연속 기록"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s1 3.5-1.5 6S7 12 7 15a5 5 0 0 0 10 0c0-2-1-3.5-1-3.5S15 14 13 14c0 0 2-3 0-6.5C12.5 6 12 2 12 2z"/></svg><b class="num"><span id="hStreak">0</span>일 연속</b></span>
+      <span class="chip c-fire" title="연속 기록"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2s1 3.5-1.5 6S7 12 7 15a5 5 0 0 0 10 0c0-2-1-3.5-1-3.5S15 14 13 14c0 0 2-3 0-6.5C12.5 6 12 2 12 2z"/></svg><b class="num"><span id="hStreak">0</span>일 연속<span id="hShield"></span></b></span>
       <span class="chip c-cp" title="전투력"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="m13 19 6-6M16 16l4 4"/></svg><b class="num" id="hCp">0</b></span>
     </div>
   </header>
@@ -738,7 +780,8 @@ const STAGES = [
 ];
 const TIER_REWARD = [null, { exp: 40, gold: 25, stat: 3 }, { exp: 72, gold: 45, stat: 5 }, { exp: 130, gold: 80, stat: 8 }];
 const TIER_NAME = [null, '입문', '숙련', '마스터'];
-const WEEKLY_REWARD = { exp: 100, gold: 120, tickets: 2 };
+const WEEKLY_REWARD = { exp: 100, gold: 120, tickets: 2, shields: 1 };
+const SHIELD_MAX = 2; // 스트릭 보호권: 주간 퀘스트 보상으로 1장, 최대 2장까지 모아 둠
 const SUB_REWARD = { exp: 20, gold: 15 }, SUB_DAILY_CAP = 3;
 const OVERLOAD = 1.5; // 하루 분량이 원래 속도의 1.5배를 넘으면 더 올리지 않고 목표 조정을 제안
 
@@ -814,6 +857,17 @@ function syncDays(q) {
   if (diffDays(start, today) > 30) start = addDays(today, -30);
   for (let d = start; d < today; d = addDays(d, 1)) ensureDay(q, d);
   for (const x of q.quests) if (x.status === 'todo' && x.date < today) x.status = 'missed';
+  // 스트릭 보호권: 이번에 지나간 날 중 하나도 못 한 날이 있고, 그 전날까지 연속 기록이 있으면 1장 써서 이어 줌
+  if (q.shields > 0) {
+    const by = dayTally(q);
+    for (let d = q.lastGen && q.lastGen < today ? q.lastGen : today; d < today && q.shields > 0; d = addDays(d, 1)) {
+      if (!by[d] || by[d].d || (q.shieldDays && q.shieldDays[d])) continue;
+      const before = streakBack(q, by, addDays(d, -1));
+      if (!before) continue;
+      q.shields--; (q.shieldDays || (q.shieldDays = {}))[d] = true;
+      notes.push(`${+d.slice(5, 7)}월 ${+d.slice(8)}일은 루틴을 못 했지만 스트릭 보호권 1장으로 ${before}일 연속 기록을 지켰어요. (남은 보호권 ${q.shields}장)`);
+    }
+  }
   for (const r of q.routines) {
     const last2 = routineHistory(q, r, today, false).slice(-2);
     if (r.tier > 1 && last2.length === 2 && last2.every((x) => x.status === 'missed')) {
@@ -934,17 +988,49 @@ function monthInfo(q, goal) {
 }
 
 // 전체 연속 기록: 하루에 1개라도 완료하면 이어짐 (오늘 아직 안 했으면 어제까지로 셈, 예정 없는 날은 건너뜀)
-function dayStreak(q) {
+// 스트릭 보호권을 쓴 날은 세지 않지만 끊기지도 않음
+function dayTally(q) {
   const by = {};
-  let first = q.today;
-  for (const x of q.quests) { (by[x.date] = by[x.date] || { n: 0, d: 0 }).n++; if (x.status === 'done') by[x.date].d++; if (x.date < first) first = x.date; }
-  let n = 0, d = q.today;
-  if (by[d] && by[d].d) n++;
-  for (d = addDays(d, -1); d >= first; d = addDays(d, -1)) {
+  for (const x of q.quests) { (by[x.date] = by[x.date] || { n: 0, d: 0 }).n++; if (x.status === 'done') by[x.date].d++; }
+  return by;
+}
+// d부터 거꾸로 셈 (d가 이미 지나간 날이면 못 한 날에서 끊김)
+function streakBack(q, by, d) {
+  let n = 0, first = d;
+  for (const k in by) if (k < first) first = k;
+  for (; d >= first; d = addDays(d, -1)) {
     if (!by[d]) continue;
-    if (by[d].d) n++; else break;
+    if (by[d].d) n++; else if (!(q.shieldDays && q.shieldDays[d])) break;
   }
   return n;
+}
+function dayStreak(q) {
+  const by = dayTally(q), t = q.today;
+  return (by[t] && by[t].d ? 1 : 0) + streakBack(q, by, addDays(t, -1));
+}
+// 결산(주간·월간·연간): from~to 사이 기록 요약. 오늘 아직 안 한 퀘스트는 빼고 셈
+function periodStats(q, from, to) {
+  const xs = q.quests.filter((x) => x.date >= from && x.date <= to && (x.date < q.today || x.status !== 'todo'));
+  const done = xs.filter((x) => x.status === 'done'), by = {}, perR = {}, perStat = { str: 0, int: 0, vit: 0, dex: 0 }, days = new Set();
+  let called = 0, early = 0, timer = 0;
+  for (const x of xs) { (by[x.date] = by[x.date] || { n: 0, d: 0 }).n++; if (x.status === 'done') by[x.date].d++; }
+  for (const x of done) {
+    days.add(x.date);
+    const r = q.routines.find((y) => y.id === x.rid);
+    perR[x.rid] = { n: ((perR[x.rid] && perR[x.rid].n) || 0) + 1, title: r ? r.title : '삭제된 루틴', stat: r ? r.stat : null };
+    if (r) perStat[r.stat]++;
+    if (x.callAt) called++;
+    if (x.proof === 'timer') timer++;
+    if (x.doneAt && new Date(x.doneAt).getHours() < 9) early++;
+  }
+  let best = 0, run = 0;
+  for (let d = from; d <= to && d <= q.today; d = addDays(d, 1)) {
+    if (!by[d]) continue;
+    if (by[d].d) best = Math.max(best, ++run); else if (!(q.shieldDays && q.shieldDays[d])) run = 0;
+  }
+  const top = Object.values(perR).sort((a, b) => b.n - a.n)[0] || null;
+  const kills = Object.keys(q.bossLog || {}).filter((ws) => ws >= weekStartOf(from) && ws <= to).length;
+  return { total: xs.length, done: done.length, rate: xs.length ? done.length / xs.length : 0, days: days.size, best, top, perStat, called, early, timer, kills };
 }
 // ===== 나쁜 습관 보스: 이번 주 루틴 완료 1개 = 1 피해, 이번 주 예정 루틴의 80%를 하면 처치 =====
 // 깎은 비율만큼 지도의 주간 보스 체력도 줄어듦(최대 50%). 보상은 골드·입장권만 (레벨·능력치는 루틴으로만)
@@ -1093,6 +1179,7 @@ function renderHeader() {
   $('hTitle').textContent = titleOf(S.level);
   $('hName').innerHTML = `<span>${esc(nick())}</span>${ICON.pen}`;
   $('hStreak').textContent = S.q ? dayStreak(S.q) : 0;
+  $('hShield').textContent = S.q && S.q.shields ? ` · 🛡${S.q.shields}` : '';
   document.querySelectorAll('.tabbar button').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === S.tab)));
 }
 
@@ -1171,10 +1258,11 @@ function itemRow(it, actions) {
 
 function renderChar() {
   const c = classOf(S), cs = combat(S), maxStat = Math.max(S.str, S.int, S.vit, S.dex, 25);
-  let h = `<section class="sec"><div class="card avatar"><div class="ava-big">${heroSvg(S)}</div>
-    <div class="grow"><div class="eyebrow">Lv.${S.level} · ${titleOf(S.level)}</div><div class="row" style="gap:6px"><div class="cname" style="min-width:0;overflow-wrap:anywhere">${esc(nick())}</div><button class="btn xs" data-act="nick">바꾸기</button></div>
+  let h = `<section class="sec"><div class="card avatar"><div class="ava-big">${heroSvg(S)}${S.q && myPet(S.q) ? `<span class="ava-pet" aria-hidden="true">${myPet(S.q).e}</span>` : ''}</div>
+    <div class="grow"><div class="eyebrow">Lv.${S.level} · ${titleOf(S.level)}${S.q && myTitle(S.q) ? ` · ${myTitle(S.q).e} ${esc(myTitle(S.q).name)}` : ''}</div><div class="row" style="gap:6px"><div class="cname" style="min-width:0;overflow-wrap:anywhere">${esc(nick())}</div><button class="btn xs" data-act="nick">바꾸기</button></div>
     <div class="sub"><b style="color:var(--fg)">${CLASSES[c].name}</b> · ${CLASSES[c].desc}</div>
     <div class="sub" style="margin-top:4px">장비를 바꾸면 모습이 바뀌어요. 영웅 등급 이상 방어구는 날개가 생겨요.</div></div></div></section>`;
+  h += lifeCharHtml();
   h += `<section class="sec"><div class="sec-h"><h2>전직</h2><span class="sub">가장 높은 능력치가 25 이상이면 자동으로 바뀌어요</span></div><div class="classes">${['berserker', 'archmage', 'guardian', 'ranger'].map((k) => { const st = CLASSES[k].stat; return `<div class="cls-card ${k === c ? 'on' : ''}" style="--c:var(--${st})">${artInline(heroArt(k), '')}<b>${CLASSES[k].name}</b><span class="num">${STAT[st].name} ${Math.min(S[st], 25)}/25</span></div>`; }).join('')}</div></section>`;
   h += '<section class="sec"><div class="sec-h"><h2>능력치</h2><span class="sub">루틴을 하면 오르고, 전투 능력이 돼요</span></div><div class="card list">';
   for (const k of ['str', 'int', 'vit', 'dex']) {
@@ -1191,7 +1279,7 @@ function renderChar() {
     <div><dt>지혜의 파동</dt><dd class="num">${fmt(cs.wave)} / ${cs.waveCd.toFixed(2)}초</dd></div>
     <div><dt>전투력</dt><dd class="num">${fmt(myCp())}</dd></div></dl></section>`;
   h += '<div class="note">능력치와 레벨은 오늘 탭의 퀘스트를 완료해야만 올라요. 물량 막기는 골드와 장비만 줘요.</div>';
-  h += settingsHtml() + appHtml() + backupHtml();
+  h += lifeCollectHtml() + settingsHtml() + appHtml() + backupHtml();
   h += `<section class="sec"><div id="resetBox"><button class="btn sm ghost" data-act="reset">처음부터 다시 하기</button></div></section>`;
   $('view').innerHTML = h;
 }
@@ -1928,10 +2016,21 @@ function syncQuests() {
   if (!q.bossLog) q.bossLog = {};
   for (const g of q.goals) if (!g.mode) g.mode = 'ESCALATION';
   for (const r of q.routines) if (r.goalId && !q.goals.some((g) => g.id === r.goalId)) r.goalId = null;
+  // 2단계: 모험 일지·카드·카드팩·영지 금고·스트릭 보호권
+  if (!q.journey) q.journey = {};
+  if (!q.cards) q.cards = {};
+  if (!q.packs) q.packs = {};
+  if (!q.vault) q.vault = { at: Date.now(), day: '', got: 0 };
+  if (q.shields === undefined) q.shields = 0;
+  if (!q.shieldDays) q.shieldDays = {};
   const rt = realToday();
   if (rt > q.today) q.today = rt;
-  const notes = syncDays(q);
+  const notes = syncDays(q), jn = closeJourney(q);
+  if (jn) notes.push(jn);
   if (notes.length) q.notes = notes;
+  // 저장 용량: 카드팩 기록은 40일, 모험 일지는 400일(연말 결산용)만 남김
+  for (const k of Object.keys(q.packs)) if (k < addDays(q.today, -40)) delete q.packs[k];
+  for (const k of Object.keys(q.journey)) if (k < addDays(q.today, -400)) delete q.journey[k];
 }
 
 // ===== 캐릭터 외형: 직업 일러스트 위에 장비 효과를 겹침 (방어구 등급 = 오라, 영웅 이상 = 날개, 무기 등급 = 무기 빛, 장신구 = 떠다니는 보석) =====
@@ -1980,6 +2079,7 @@ function renderToday() {
   if (!list.length) h += '<div class="empty">오늘은 예정된 루틴이 없어요.</div>';
   for (const x of list) h += questCard(x);
   h += '</div><div class="sub">날짜 넘기기는 시제품 테스트용이에요. 지난 날 못 한 퀘스트는 \'놓침\'으로 기록돼요.</div></section>';
+  h += lifeTodayHtml();
 
   const subsToday = q.subs.filter((s) => !s.done || s.doneDate === today);
   h += `<section class="sec"><div class="sec-h"><h2>부가 퀘스트</h2><span class="sub num">오늘 보상 ${Math.max(0, subRewardLeft(q))}/${SUB_DAILY_CAP}회 남음</span></div>
@@ -2044,8 +2144,8 @@ function renderGoals() {
       <div class="g-rs">${rs.map(routineRow).join('')}</div>
       <div class="row"><button class="btn sm grow" data-qact="glink" data-g="${g.id}">＋ 루틴 추가·연결</button>
         <button class="btn xs" data-qact="gedit" data-g="${g.id}">목표 수정</button><button class="btn xs ghost" data-qact="gdel" data-g="${g.id}">삭제</button></div>
-      ${w.complete && !w.claimed ? `<button class="btn pri" data-qact="weekly" data-g="${g.id}">이번 주 퀘스트 달성! 보상 받기 (EXP +${WEEKLY_REWARD.exp} · 골드 +${WEEKLY_REWARD.gold} · 입장권 +${WEEKLY_REWARD.tickets})</button>`
-        : w.claimed ? '<div class="sub okc">이번 주 보상을 받았어요</div>' : rs.length ? `<div class="sub">이번 주 분량을 채우면 EXP +${WEEKLY_REWARD.exp} · 골드 +${WEEKLY_REWARD.gold} · 입장권 +${WEEKLY_REWARD.tickets}</div>` : ''}
+      ${w.complete && !w.claimed ? `<button class="btn pri" data-qact="weekly" data-g="${g.id}">이번 주 퀘스트 달성! 보상 받기 (EXP +${WEEKLY_REWARD.exp} · 골드 +${WEEKLY_REWARD.gold} · 입장권 +${WEEKLY_REWARD.tickets} · 보호권 +1)</button>`
+        : w.claimed ? '<div class="sub okc">이번 주 보상을 받았어요</div>' : rs.length ? `<div class="sub">이번 주 분량을 채우면 EXP +${WEEKLY_REWARD.exp} · 골드 +${WEEKLY_REWARD.gold} · 입장권 +${WEEKLY_REWARD.tickets} · 스트릭 보호권 +1 (최대 ${SHIELD_MAX}장, 루틴을 못 한 날 연속 기록을 지켜 줘요)</div>` : ''}
       ${p.behind ? `<div class="warn">밀린 양이 많아서 하루 분량을 원래 속도의 ${OVERLOAD}배로 묶었어요.</div><button class="btn sm" data-qact="adjust" data-g="${g.id}">남은 기간에 맞게 목표 낮추기</button>` : ''}
     </article>`;
   }
@@ -2121,22 +2221,24 @@ function openExec(x) {
       const left = Math.max(0, +el.dataset.left - 1); el.dataset.left = left;
       el.style.setProperty('--p', 1 - left / +el.dataset.total);
       $('tmrT').textContent = `${String(Math.floor(left / 60)).padStart(2, '0')}:${String(left % 60).padStart(2, '0')}`;
-      if (!left) { clearInterval(execTimer); finishQuest(x.id); }
+      if (!left) { clearInterval(execTimer); finishQuest(x.id, 'timer'); }
     }, 1000);
   } else {
     const b = $('holdBtn');
     const stop = () => { cancelAnimationFrame(holdTimer); b.style.setProperty('--p', 0); };
     b.addEventListener('pointerdown', (ev) => {
       ev.preventDefault(); const t0 = performance.now(); tone(660, 'sine', 0.08, 0, 0.06);
-      const tick = (now) => { const p = Math.min(1, (now - t0) / 1500); b.style.setProperty('--p', p); if (p >= 1) finishQuest(b.dataset.q); else holdTimer = requestAnimationFrame(tick); };
+      const tick = (now) => { const p = Math.min(1, (now - t0) / 1500); b.style.setProperty('--p', p); if (p >= 1) finishQuest(b.dataset.q, 'hold'); else holdTimer = requestAnimationFrame(tick); };
       holdTimer = requestAnimationFrame(tick);
     });
     ['pointerup', 'pointerleave', 'pointercancel'].forEach((e) => b.addEventListener(e, stop));
   }
 }
 
-function finishQuest(qid) {
+// how: 'timer'(타이머 완주) · 'early'(먼저 끝냄) · 'hold'(꾹 눌러 인증) → 갓생 카드의 인증 기록
+function finishQuest(qid, how) {
   const q = Q(), x = q.quests.find((y) => y.id === qid); if (!x || x.status !== 'todo') return;
+  x.proof = how || 'early';
   const r = routineOf(x.rid), el = $('amtV');
   const amt = el ? Math.max(0, +el.dataset.v) : x.amount;
   clearInterval(execTimer); cancelAnimationFrame(holdTimer);
@@ -2146,6 +2248,8 @@ function finishQuest(qid) {
   if (q.snoozed && q.snoozed.qid === qid) q.snoozed = null;
   q.example = false; save(); closeModal(); render();
   rewardToast(`${STAT[r.stat].name} +${rw.stat} · EXP +${rw.exp} · 골드 +${rw.gold} · 입장권 +1${hb}`, g);
+  // 루틴 1개 = 모험 한 걸음: 보상 알림 뒤에 갈림길을 띄움 (다른 창이 열려 있으면 오늘 탭의 버튼으로)
+  setTimeout(() => { if (pendingSteps(q) && !$('modal').innerHTML) openStep(); }, 900);
 }
 
 // ===== 새로 만들기: 습관 루틴 / 목표(→ 새 루틴 만들기 또는 기존 루틴 연결) =====
@@ -2454,9 +2558,9 @@ document.addEventListener('click', (ev) => {
     } break;
     case 'recall': { const sx = q.snoozed && q.quests.find((y) => y.id === q.snoozed.qid); q.snoozed = null; save(); render(); if (sx) openCall(sx); break; }
     case 'unsnooze': q.snoozed = null; save(); render(); break;
-    case 'accept': case 'start': if (x) openExec(x); break;
+    case 'accept': case 'start': if (x) { if (d.qact === 'accept' && !x.callAt) { x.callAt = Date.now(); save(); } openExec(x); } break;
     case 'snooze': if (x) { x.snooze++; q.snoozed = { qid: x.id, until: Date.now() + q.settings.snooze * 60000 }; save(); render(); toast(`${q.settings.snooze}분 뒤 다시 울려요 (미룸 ${x.snooze}회)`); } break;
-    case 'finish': finishQuest(d.q); break;
+    case 'finish': finishQuest(d.q, 'early'); break;
     case 'pause': { execPaused = !execPaused; el.textContent = execPaused ? '다시 시작' : '일시정지'; const s = $('tmrS'); if (s) s.textContent = execPaused ? '일시정지' : '집중 중'; break; }
     case 'closeexec': clearInterval(execTimer); closeModal(); break;
     case 'amt': {
@@ -2469,8 +2573,10 @@ document.addEventListener('click', (ev) => {
     case 'weekly': {
       const g = goalOf(d.g); if (!g) break;
       const w = weeklyOf(q, g); if (!w.complete || w.claimed) break;
-      q.weeklyClaimed[w.key] = true; const gr = grant(WEEKLY_REWARD, null); save(); render();
-      rewardToast(`주간 퀘스트 달성! EXP +${WEEKLY_REWARD.exp} · 골드 +${WEEKLY_REWARD.gold} · 입장권 +${WEEKLY_REWARD.tickets}`, gr); break;
+      q.weeklyClaimed[w.key] = true; const gr = grant(WEEKLY_REWARD, null), sh = q.shields < SHIELD_MAX;
+      if (sh) q.shields++;
+      save(); render();
+      rewardToast(`주간 퀘스트 달성! EXP +${WEEKLY_REWARD.exp} · 골드 +${WEEKLY_REWARD.gold} · 입장권 +${WEEKLY_REWARD.tickets}${sh ? ` · 스트릭 보호권 +1` : ''}`, gr); break;
     }
     case 'adjust': {
       const g = goalOf(d.g); if (!g) break;
@@ -2556,7 +2662,7 @@ function handleNativeCall(qid, action) {
   const x = Q().quests.find((y) => y.id === qid); if (!x || x.status !== 'todo') return;
   if (QA) QA.stopRinging().catch(() => {});
   S.tab = 'today'; render();
-  if (action === 'accept') openExec(x); else openCall(x);
+  if (action === 'accept') { if (!x.callAt) { x.callAt = Date.now(); save(); } openExec(x); } else openCall(x);
 }
 async function nativeResume() {
   if (!QA) return;
@@ -2664,6 +2770,375 @@ document.addEventListener('click', async (ev) => {
 });
 // ===== 오늘·목표 탭 끝 =====
 
+// ===== 2단계: 혼자서도 공유 — 모험 일지, 카드팩·수집, 영지·금고, 갓생 카드·결산 =====
+// 원칙: 여기서 주는 건 골드·수집품·꾸미기뿐. 레벨·능력치·입장권은 루틴(오늘 탭)으로만.
+const dayRng = (key) => mulberry32(hash32('qc|' + key));
+
+// ----- 수집 카드: 펫·칭호·가구 (등급 0 일반 · 1 희귀 · 2 전설) -----
+const CARDS = [
+  ['p-chick', 'pet', '🐣', '병아리', 0], ['p-cat', 'pet', '🐱', '고양이', 0], ['p-dog', 'pet', '🐶', '강아지', 0], ['p-rabbit', 'pet', '🐰', '토끼', 0],
+  ['p-fox', 'pet', '🦊', '여우', 1], ['p-owl', 'pet', '🦉', '부엉이', 1], ['p-dragon', 'pet', '🐉', '아기 드래곤', 2], ['p-unicorn', 'pet', '🦄', '유니콘', 2],
+  ['t-dawn', 'title', '🌅', '새벽을 여는 자', 0], ['t-water', 'title', '💧', '물 한 컵의 기사', 0], ['t-page', 'title', '📖', '한 쪽의 현자', 0],
+  ['t-3day', 'title', '🔨', '작심삼일 파괴자', 1], ['t-hunter', 'title', '🏹', '미루기 사냥꾼', 1], ['t-alarm', 'title', '⏰', '알람 정복자', 1], ['t-guard', 'title', '🛡️', '갓생 수호자', 2],
+  ['f-plant', 'furn', '🪴', '화분', 0], ['f-bed', 'furn', '🛏️', '포근한 침대', 0], ['f-candle', 'furn', '🕯️', '촛대', 0], ['f-books', 'furn', '📚', '책장', 0], ['f-chair', 'furn', '🪑', '원목 의자', 0],
+  ['f-art', 'furn', '🖼️', '풍경화', 1], ['f-violin', 'furn', '🎻', '바이올린', 1], ['f-bear', 'furn', '🧸', '곰 인형', 1], ['f-sofa', 'furn', '🛋️', '소파', 1], ['f-trophy', 'furn', '🏆', '트로피', 2],
+].map(([id, kind, e, name, rar]) => ({ id, kind, e, name, rar }));
+const CARD_KIND = { pet: '펫', title: '칭호', furn: '가구' };
+const CARD_RAR = [{ name: '일반', w: 70, dup: 5 }, { name: '희귀', w: 25, dup: 15 }, { name: '전설', w: 5, dup: 40 }];
+const cardOf = (id) => CARDS.find((c) => c.id === id);
+function drawCard(rng) {
+  let r = rng() * 100, rar = 0;
+  for (; rar < 2 && r >= CARD_RAR[rar].w; rar++) r -= CARD_RAR[rar].w;
+  const pool = CARDS.filter((c) => c.rar === rar);
+  return pool[Math.floor(rng() * pool.length)];
+}
+// 카드 받기: 처음이면 수집, 중복이면 골드로 바꿈
+function gainCard(q, c) {
+  const had = q.cards[c.id] || 0;
+  q.cards[c.id] = had + 1;
+  if (had) S.gold += CARD_RAR[c.rar].dup;
+  return { c, isNew: !had, gold: had ? CARD_RAR[c.rar].dup : 0 };
+}
+
+// ----- 오늘의 모험 일지: 루틴 1개 완료 = 한 걸음, 이벤트 3택1 (Capybara Go 방식) -----
+// 선택지: g = 확정 골드, r = 50% 확률로 큰 골드, c = 확률로 수집 카드(아니면 골드 조금)
+const EVENTS = [
+  { e: '📦', s: '안개 낀 숲길에서 낡은 상자를 발견했어요.', o: [['조심히 열어 본다', 'g', 14, '동전 몇 닢이 나왔어요.'], ['힘껏 걷어찬다', 'r', 40, '상자가 부서지며 금화가 쏟아졌어요!', '발가락만 아팠어요…'], ['상자 밑을 살핀다', 'c', 0.35, '반짝이는 카드가 숨어 있었어요!', '먼지뿐이었지만 길을 기억해 뒀어요.']] },
+  { e: '🧙', s: '길가의 떠돌이 상인이 말을 걸어요.', o: [['물건을 팔아 본다', 'g', 16, '쓸모없던 돌을 비싸게 팔았어요.'], ['수상한 복권을 산다', 'r', 44, '당첨! 상인이 울상이에요.', '꽝… 상인이 웃으며 떠났어요.'], ['보물 이야기를 듣는다', 'c', 0.3, '이야기 속 카드를 선물로 받았어요!', '재밌는 이야기였어요.']] },
+  { e: '🌉', s: '흔들리는 다리 앞에 섰어요.', o: [['천천히 건넌다', 'g', 12, '건너편에서 동전을 주웠어요.'], ['뛰어서 건넌다', 'r', 38, '건너편 둥지에서 금화를 찾았어요!', '모자를 강물에 빠뜨렸어요…'], ['다리 밑을 살핀다', 'c', 0.35, '물가에 카드가 떠내려와 있었어요!', '물고기만 놀랐어요.']] },
+  { e: '🍄', s: '빛나는 버섯 군락을 만났어요.', o: [['몇 개만 따 간다', 'g', 15, '약초상에게 팔 만해요.'], ['제일 큰 걸 딴다', 'r', 42, '전설의 금버섯이었어요!', '그냥 커다란 독버섯이었어요…'], ['버섯 요정을 찾는다', 'c', 0.32, '요정이 카드를 건넸어요!', '요정은 부끄러운지 숨었어요.']] },
+  { e: '🏚️', s: '버려진 오두막에 불빛이 보여요.', o: [['문을 두드린다', 'g', 13, '할머니가 수고비를 주셨어요.'], ['창문으로 들어간다', 'r', 40, '숨겨진 금고를 찾았어요!', '고양이에게 쫓겨났어요…'], ['굴뚝을 올려다본다', 'c', 0.33, '굴뚝에 걸린 카드를 꺼냈어요!', '연기만 자욱했어요.']] },
+  { e: '🐺', s: '길을 막은 늑대 무리가 보여요.', o: [['멀리 돌아간다', 'g', 11, '돌아가는 길에 동전을 주웠어요.'], ['정면 돌파!', 'r', 45, '늑대들이 금화 주머니를 두고 도망쳤어요!', '헐레벌떡 도망쳤어요…'], ['먹이를 나눠 준다', 'c', 0.4, '늑대가 고맙다며 카드를 물어 왔어요!', '늑대가 꼬리를 흔들고 갔어요.']] },
+  { e: '⛲', s: '소원을 들어준다는 샘을 찾았어요.', o: [['동전 하나 던진다', 'g', 17, '샘이 동전을 두 배로 돌려줬어요.'], ['지갑째 던진다', 'r', 46, '샘이 금화로 가득 채워 돌려줬어요!', '샘이 지갑을 삼켰어요…'], ['물을 떠 마신다', 'c', 0.3, '물속에서 카드가 떠올랐어요!', '물맛이 아주 좋았어요.']] },
+  { e: '🎪', s: '마을 장터에서 축제가 열렸어요.', o: [['일손을 돕는다', 'g', 16, '품삯을 받았어요.'], ['과녁 맞히기에 도전', 'r', 40, '한가운데 명중! 상금을 받았어요!', '과녁 옆 수박만 맞혔어요…'], ['기념품 가게를 본다', 'c', 0.38, '기념 카드를 손에 넣었어요!', '구경만 실컷 했어요.']] },
+  { e: '🌋', s: '뜨거운 동굴 입구가 보여요.', o: [['입구만 살펴본다', 'g', 12, '입구에서 광석 조각을 주웠어요.'], ['깊숙이 들어간다', 'r', 44, '용암 옆에서 금덩이를 캤어요!', '눈썹이 살짝 그을렸어요…'], ['벽화를 읽는다', 'c', 0.34, '벽화 뒤에 카드가 숨겨져 있었어요!', '옛 모험가의 낙서였어요.']] },
+  { e: '🧚', s: '길 잃은 꼬마 요정을 만났어요.', o: [['집까지 데려다준다', 'g', 15, '요정 엄마가 사례했어요.'], ['요정 가루를 뿌려 본다', 'r', 42, '하늘을 날다 금화 구름을 지났어요!', '재채기만 계속 나왔어요…'], ['같이 놀아 준다', 'c', 0.4, '요정이 우정의 카드를 줬어요!', '요정이 웃으며 날아갔어요.']] },
+  { e: '🏴‍☠️', s: '해안가에 낡은 해적 지도가 떠밀려 왔어요.', o: [['지도를 판다', 'g', 14, '수집가가 값을 쳐줬어요.'], ['X 표시를 파 본다', 'r', 48, '진짜 보물이었어요!', '조개껍데기만 나왔어요…'], ['지도 뒷면을 본다', 'c', 0.3, '뒷면에 카드가 붙어 있었어요!', '낙서만 있었어요.']] },
+  { e: '🌠', s: '밤하늘에 별똥별이 떨어져요.', o: [['소원을 빈다', 'g', 13, '주머니에서 잊었던 동전을 찾았어요.'], ['떨어진 곳으로 달린다', 'r', 40, '별 조각이 금처럼 빛났어요!', '도착해 보니 반딧불이었어요…'], ['별자리를 그린다', 'c', 0.36, '별빛이 카드로 변했어요!', '예쁜 그림이 완성됐어요.']] },
+];
+const DUP_SMALL = 6;
+// 그날 완료한 루틴 퀘스트 (완료 순서대로) = 걸음 순서
+function doneOn(q, date) { return q.quests.filter((x) => x.date === date && x.status === 'done').sort((a, b) => (a.doneAt || 0) - (b.doneAt || 0)); }
+function stepsOn(q, date) { return q.journey[date] || []; }
+function pendingSteps(q, date) { return Math.max(0, doneOn(q, date || q.today).length - stepsOn(q, date || q.today).length); }
+function eventFor(date, i) {
+  const rng = dayRng(date + '|ev'), order = EVENTS.map((_, k) => k);
+  for (let k = order.length - 1; k > 0; k--) { const j = Math.floor(rng() * (k + 1)); [order[k], order[j]] = [order[j], order[k]]; }
+  return order[i % order.length];
+}
+// 같은 날·같은 걸음·같은 선택이면 결과도 같음 (다시 열어서 바꿀 수 없음)
+function resolveStep(q, date, pick) {
+  const steps = q.journey[date] || (q.journey[date] = []), i = steps.length, ev = eventFor(date, i), o = EVENTS[ev].o[pick];
+  const rng = dayRng(`${date}|${i}|${pick}`), x = doneOn(q, date)[i];
+  const st = { rid: x ? x.rid : null, ev, pick, win: true, gold: 0, card: null };
+  if (o[1] === 'g') st.gold = o[2];
+  else if (o[1] === 'r') { st.win = rng() < 0.5; st.gold = st.win ? o[2] : 0; }
+  else { st.win = rng() < o[2]; if (st.win) st.card = drawCard(rng).id; else st.gold = DUP_SMALL; }
+  S.gold += st.gold;
+  let got = null;
+  if (st.card) { got = gainCard(q, cardOf(st.card)); st.gold += got.gold; }
+  steps.push(st);
+  return { st, got };
+}
+// 지난 날 못 고른 걸음은 '안전한 길'(첫 번째 선택지)로 자동 진행
+function closeJourney(q) {
+  let n = 0, gold = 0;
+  for (let d = addDays(q.today, -30); d < q.today; d = addDays(d, 1)) {
+    for (let k = pendingSteps(q, d); k > 0; k--) { const { st } = resolveStep(q, d, 0); n++; gold += st.gold; }
+  }
+  return n ? `지난 날 못 고른 모험 ${n}걸음은 안전한 길로 갔어요 (골드 +${gold}).` : '';
+}
+function stepLine(q, st) {
+  const ev = EVENTS[st.ev], o = ev.o[st.pick], r = st.rid && q.routines.find((y) => y.id === st.rid);
+  const res = st.win ? o[3] : o[4], c = st.card && cardOf(st.card);
+  return { e: ev.e, who: r ? r.title : '루틴', what: `${o[0]} → ${res}`, gain: c ? `${c.e} ${c.name}` : st.gold ? `골드 +${st.gold}` : '' };
+}
+function openStep() {
+  const q = Q(); if (!pendingSteps(q)) { closeModal(); return; }
+  const i = stepsOn(q, q.today).length, ev = EVENTS[eventFor(q.today, i)], x = doneOn(q, q.today)[i], r = x && routineOf(x.rid);
+  const hint = (o) => (o[1] === 'g' ? `골드 +${o[2]} 확정` : o[1] === 'r' ? `50%: 골드 +${o[2]}` : `${Math.round(o[2] * 100)}%: 수집 카드`);
+  openModal(`<div class="eyebrow">오늘의 모험 · ${i + 1}번째 걸음${r ? ` · '${esc(r.title)}' 완료` : ''}</div>
+    <div class="ev-art" aria-hidden="true">${ev.e}</div><div class="big">${ev.s}</div>
+    <div class="list">${ev.o.map((o, k) => `<button class="btn choice" data-life="pick" data-k="${k}"><b>${o[0]}</b><small>${hint(o)}</small></button>`).join('')}</div>
+    <div class="sub">모험은 골드와 수집 카드만 줘요. 레벨·능력치는 루틴으로만 올라요.</div>
+    <button class="btn ghost" data-qact="closeexec">나중에 고르기</button>`);
+}
+function pickStep(k) {
+  const q = Q(); if (!pendingSteps(q)) return;
+  const { st, got } = resolveStep(q, q.today, k), L = stepLine(q, st), more = pendingSteps(q);
+  save(); render();
+  openModal(`<div class="eyebrow">모험 결과</div><div class="ev-art" aria-hidden="true">${got ? got.c.e : L.e}</div>
+    <div class="big">${esc(L.what.split(' → ')[1])}</div>
+    ${got ? `<div class="sub center"><b class="rar${got.c.rar}">${CARD_RAR[got.c.rar].name} ${CARD_KIND[got.c.kind]} '${esc(got.c.name)}'</b> ${got.isNew ? '<span class="tag new">NEW</span>' : `(중복 → 골드 +${got.gold})`}</div>` : ''}
+    ${st.gold && !got ? `<div class="sub center num">골드 +${st.gold}</div>` : ''}
+    ${more ? `<button class="btn pri" data-life="step">다음 걸음 (${more})</button>` : ''}
+    <button class="btn ${more ? 'ghost' : 'pri'}" data-qact="closeexec">${more ? '나중에' : '확인'}</button>`);
+  if (st.gold || got) fanfare(false);
+}
+
+// ----- 아침·오후 루틴 묶음 → 카드팩 (펫·칭호·가구 3장) -----
+const PACKS = { am: { name: '아침 카드팩', when: '12시 전 루틴' }, pm: { name: '오후 카드팩', when: '12시부터 루틴' } };
+const bundleOf = (r) => (r && r.time < '12:00' ? 'am' : 'pm');
+function packState(q, b) {
+  const list = q.quests.filter((x) => x.date === q.today && bundleOf(routineOf(x.rid)) === b);
+  const done = list.filter((x) => x.status === 'done').length, opened = q.packs[q.today] && q.packs[q.today][b];
+  return { n: list.length, done, ready: list.length > 0 && done === list.length && !opened, opened: !!opened };
+}
+function openPack(b) {
+  const q = Q(), ps = packState(q, b); if (!ps.ready) return;
+  const rng = dayRng(`${q.today}|pack|${b}`), got = [0, 1, 2].map(() => gainCard(q, drawCard(rng)));
+  (q.packs[q.today] = q.packs[q.today] || {})[b] = got.map((g) => g.c.id);
+  save(); render(); fanfare(got.some((g) => g.c.rar === 2));
+  openModal(`<div class="eyebrow">${PACKS[b].name}</div><div class="big">카드 3장을 얻었어요!</div>
+    <div class="pack">${got.map((g, k) => `<div class="pk rar${g.c.rar}" style="--d:${k * 0.15}s"><span class="pe">${g.c.e}</span><b>${esc(g.c.name)}</b><small>${CARD_RAR[g.c.rar].name} ${CARD_KIND[g.c.kind]}</small>
+      ${g.isNew ? '<span class="tag new">NEW</span>' : `<small class="num">중복 → 골드 +${g.gold}</small>`}</div>`).join('')}</div>
+    <div class="sub">펫·칭호는 캐릭터 탭 '수집'에서 고를 수 있고, 가구는 영지의 내 방에 놓여요.</div>
+    <button class="btn pri" data-qact="closeexec">확인</button>`);
+}
+
+// ----- 영지: 누적 완료로 집이 커지고, 능력치별 건물이 생김 -----
+const HOMES = [[0, '숙소', '⛺'], [30, '오두막', '🛖'], [100, '길드하우스', '🏡'], [250, '성', '🏰'], [500, '영지', '🏯']];
+const BUILDINGS = { str: ['훈련장', '⚔️'], int: ['서재', '📚'], vit: ['약초밭', '🌿'], dex: ['수련 정원', '🌸'] };
+const BLD_LV = [10, 40, 120];
+function estateOf(q) {
+  const per = { str: 0, int: 0, vit: 0, dex: 0 };
+  let total = 0;
+  for (const x of q.quests) {
+    if (x.status !== 'done') continue;
+    total++;
+    const r = routineOf(x.rid); if (r) per[r.stat]++;
+  }
+  let hi = 0; while (hi + 1 < HOMES.length && total >= HOMES[hi + 1][0]) hi++;
+  const blds = Object.keys(BUILDINGS).map((k) => { const lv = BLD_LV.filter((t) => per[k] >= t).length; return { k, lv, n: per[k], next: BLD_LV[lv] }; });
+  return { total, home: HOMES[hi], next: HOMES[hi + 1] || null, blds };
+}
+// 영지 금고(방치 보상): 시간당 골드가 쌓이지만, 하루 상한 = 오늘 완료한 루틴 수 × 15G
+const VAULT_RATE = 12, VAULT_PER = 15;
+function vaultInfo(q) {
+  const v = q.vault, cap = doneOn(q, q.today).length * VAULT_PER, got = v.day === q.today ? v.got : 0;
+  const acc = Math.floor(((Date.now() - v.at) / 3600000) * VAULT_RATE);
+  return { cap, got, avail: Math.max(0, Math.min(acc, cap - got)) };
+}
+function claimVault() {
+  const q = Q(), vi = vaultInfo(q); if (!vi.avail) return;
+  S.gold += vi.avail; q.vault = { at: Date.now(), day: q.today, got: vi.got + vi.avail };
+  save(); render(); fanfare(false); toast(`영지 금고에서 골드 +${vi.avail}`);
+}
+const myPet = (q) => (q.pet && q.cards[q.pet] ? cardOf(q.pet) : null);
+const myTitle = (q) => (q.title && q.cards[q.title] ? cardOf(q.title) : null);
+
+// ----- 오늘 탭: 모험 일지 + 카드팩 + 갓생 카드 -----
+function lifeTodayHtml() {
+  const q = Q(), steps = stepsOn(q, q.today), pend = pendingSteps(q);
+  let h = `<section class="sec"><div class="sec-h"><h2>오늘의 모험 일지</h2><button class="btn sm" data-life="daycard">갓생 카드 만들기</button></div><div class="card list journey">`;
+  if (!steps.length && !pend) h += '<div class="sub">루틴을 하나 끝낼 때마다 모험이 한 걸음 나아가요. 갈림길마다 3개 중 하나를 골라요.</div>';
+  for (const st of steps) { const L = stepLine(q, st); h += `<div class="jline"><span class="je" aria-hidden="true">${L.e}</span><div class="grow"><b>${esc(L.who)}</b> 완료 · ${esc(L.what)}</div>${L.gain ? `<span class="tag num">${esc(L.gain)}</span>` : ''}</div>`; }
+  if (pend) h += `<button class="btn pri" data-life="step">갈림길에 도착했어요! 고르러 가기 (${pend})</button>`;
+  h += '</div>';
+  const packs = ['am', 'pm'].map((b) => ({ b, ...packState(q, b) })).filter((p) => p.n);
+  if (packs.length) {
+    h += '<div class="packs">';
+    for (const p of packs) h += p.ready ? `<button class="btn pri packbtn" data-life="pack" data-b="${p.b}">🎁 ${PACKS[p.b].name} 열기</button>`
+      : `<div class="packbtn sub ${p.opened ? 'okc' : ''}">🎁 ${PACKS[p.b].name} · ${p.opened ? '오늘 열었어요' : `${PACKS[p.b].when} ${p.done}/${p.n}`}</div>`;
+    h += '</div>';
+  }
+  return h + '</section>';
+}
+
+// ----- 캐릭터 탭: 영지·금고 + 갓생 결산(위) / 수집(전투 능력 아래) -----
+function lifeCharHtml() {
+  const q = Q(), es = estateOf(q), vi = vaultInfo(q), pet = myPet(q);
+  const furn = CARDS.filter((c) => c.kind === 'furn' && q.cards[c.id]);
+  let h = `<section class="sec"><div class="sec-h"><h2>내 영지</h2><span class="sub num">루틴 누적 ${fmt(es.total)}번</span></div>
+    <div class="card estate"><div class="es-sky"><div class="es-home"><span aria-hidden="true">${es.home[2]}</span>${pet ? `<span class="es-pet" aria-hidden="true">${pet.e}</span>` : ''}</div>
+      <div class="es-name">${es.home[1]}</div><div class="sub num">${es.next ? `${es.next[1]}까지 ${fmt(es.next[0] - es.total)}번 남음` : '최고 단계예요!'}</div></div>
+    <div class="es-blds">${es.blds.map((b) => `<div class="bld ${b.lv ? '' : 'off'}" style="--c:var(--${b.k})"><span aria-hidden="true">${BUILDINGS[b.k][1]}</span><b>${BUILDINGS[b.k][0]}${b.lv ? ` Lv.${b.lv}` : ''}</b>
+      <small class="num">${STAT[b.k].name} ${b.n}${b.next ? `/${b.next}` : ' · 최고'}</small></div>`).join('')}</div>
+    <div class="es-room"><span class="sub">내 방</span>${furn.length ? furn.map((c) => `<span title="${esc(c.name)}" aria-label="${esc(c.name)}">${c.e}</span>`).join('') : '<span class="sub">카드팩에서 가구를 얻으면 여기에 놓여요</span>'}</div>
+    <div class="row vault"><div class="grow"><b>영지 금고</b> <span class="sub num">${vi.avail}G 쌓임</span>
+      <div class="sub num">시간당 ${VAULT_RATE}G · 오늘 상한 ${vi.cap}G (오늘 완료 루틴 ${vi.cap / VAULT_PER}개 × ${VAULT_PER}G) · 받은 ${vi.got}G</div></div>
+      <button class="btn sm pri num" data-life="vault" ${vi.avail ? '' : 'disabled'}>받기</button></div></div>
+    <div class="sub">집은 루틴 누적 횟수로, 건물은 그 능력치 루틴 ${BLD_LV.join('·')}번에서 Lv.1~3이 돼요. 금고는 루틴을 할수록 하루에 더 많이 쌓여요.</div></section>`;
+  h += `<section class="sec"><div class="sec-h"><h2>갓생 결산</h2>${q.shields ? `<span class="sub num">스트릭 보호권 ${q.shields}/${SHIELD_MAX}</span>` : ''}</div>
+    <div class="presets"><button class="btn sm" data-life="wrap" data-p="week">이번 주</button><button class="btn sm" data-life="wrap" data-p="lastweek">지난 주</button><button class="btn sm" data-life="wrap" data-p="month">이번 달</button><button class="btn sm" data-life="wrap" data-p="year">올해</button></div>
+    <div class="sub">기록을 카드 이미지로 만들어 단톡방·SNS에 공유할 수 있어요. 모닝콜을 받은 시각과 타이머 완주가 함께 찍혀요.</div></section>`;
+  return h;
+}
+function lifeCollectHtml() {
+  const q = Q();
+  let h = '';
+  const own = CARDS.filter((c) => q.cards[c.id]).length;
+  h += `<section class="sec"><div class="sec-h"><h2>수집</h2><span class="sub num">${own}/${CARDS.length}</span></div>`;
+  for (const kind of ['pet', 'title', 'furn']) {
+    h += `<div class="eyebrow">${CARD_KIND[kind]}${kind === 'pet' ? ' · 눌러서 데리고 다니기' : kind === 'title' ? ' · 눌러서 달기' : ''}</div><div class="cgrid">`;
+    for (const c of CARDS.filter((y) => y.kind === kind)) {
+      const n = q.cards[c.id] || 0, on = (kind === 'pet' && q.pet === c.id) || (kind === 'title' && q.title === c.id);
+      h += n ? `<button class="cc rar${c.rar} ${on ? 'on' : ''}" ${kind === 'furn' ? 'disabled' : `data-life="equip" data-id="${c.id}"`} aria-pressed="${on}"><span class="pe">${c.e}</span><b>${esc(c.name)}</b>${n > 1 ? `<small class="num">×${n}</small>` : ''}</button>`
+        : `<div class="cc off" aria-label="아직 없는 ${CARD_RAR[c.rar].name} 카드"><span class="pe">?</span><b>???</b><small>${CARD_RAR[c.rar].name}</small></div>`;
+    }
+    h += '</div>';
+  }
+  h += `<div class="sub">카드는 아침·오후 루틴 묶음을 다 하면 열리는 카드팩과 모험에서 얻어요. 중복은 골드(${CARD_RAR.map((r) => r.dup).join('·')}G)로 바뀌어요.</div></section>`;
+  return h;
+}
+
+// ===== 공유 카드 그리기 (1080×1350, 항상 밝은 톤) =====
+const SC = { bg: '#f0eeff', card: '#ffffff', card2: '#f5f3ff', ink: '#1d1838', dim: '#5f5a7d', soft: '#dedaf3', acc: '#ffcd38', ok: '#10a865', danger: '#e8423f', str: '#ff6a3d', int: '#2f7dff', vit: '#10b07e', dex: '#9a5cff' };
+const FD = '"Black Han Sans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif', FB = '"IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif';
+function cPath(c, x, y, w, h, r) { c.beginPath(); c.moveTo(x + r, y); c.arcTo(x + w, y, x + w, y + h, r); c.arcTo(x + w, y + h, x, y + h, r); c.arcTo(x, y + h, x, y, r); c.arcTo(x, y, x + w, y, r); c.closePath(); }
+function sticker(c, x, y, w, h, fill, r) {
+  r = r || 28; cPath(c, x + 8, y + 8, w, h, r); c.fillStyle = SC.ink; c.fill();
+  cPath(c, x, y, w, h, r); c.fillStyle = fill; c.fill(); c.lineWidth = 5; c.strokeStyle = SC.ink; c.stroke();
+}
+function cText(c, t, x, y, font, color, align, maxW) {
+  c.font = font; c.fillStyle = color; c.textAlign = align || 'left'; c.textBaseline = 'alphabetic';
+  t = String(t);
+  if (maxW && c.measureText(t).width > maxW) { while (t.length > 1 && c.measureText(t + '…').width > maxW) t = t.slice(0, -1); t += '…'; }
+  c.fillText(t, x, y);
+}
+function loadImg(src) { return new Promise((res) => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; }); }
+async function cardFonts() {
+  try { await Promise.race([Promise.all([document.fonts.load(`60px ${FD}`), document.fonts.load(`700 30px ${FB}`), document.fonts.load(`400 30px ${FB}`)]), new Promise((r) => setTimeout(r, 1500))]); } catch (e) {}
+}
+async function cardBase(title, sub) {
+  await cardFonts();
+  const cv = document.createElement('canvas'); cv.width = 1080; cv.height = 1350;
+  const c = cv.getContext('2d'), q = Q();
+  c.fillStyle = SC.bg; c.fillRect(0, 0, 1080, 1350);
+  c.fillStyle = SC.soft; for (let y = 20; y < 1350; y += 40) for (let x = 20; x < 1080; x += 40) c.fillRect(x, y, 4, 4);
+  sticker(c, 50, 50, 980, 250, SC.card);
+  const im = await loadImg('data:image/svg+xml;charset=utf-8,' + encodeURIComponent(heroSvg(S)));
+  c.fillStyle = SC.card2; c.beginPath(); c.arc(175, 175, 95, 0, Math.PI * 2); c.fill(); c.lineWidth = 5; c.strokeStyle = SC.ink; c.stroke();
+  if (im) c.drawImage(im, 85, 85, 180, 180);
+  const pet = myPet(q); if (pet) cText(c, pet.e, 255, 275, '64px sans-serif', SC.ink, 'center');
+  cText(c, sub, 300, 115, `500 30px ${FB}`, SC.dim, 'left', 700);
+  cText(c, title, 300, 185, `60px ${FD}`, SC.ink, 'left', 700);
+  const t = myTitle(q);
+  cText(c, `Lv.${S.level} ${CLASSES[classOf(S)].name}${t ? ` · ${t.e} ${t.name}` : ` · ${titleOf(S.level)}`}`, 300, 245, `700 30px ${FB}`, SC.ink, 'left', 700);
+  const es = estateOf(q);
+  cText(c, `퀘스트콜 · 루틴을 해야만 강해지는 RPG · 내 영지: ${es.home[2]} ${es.home[1]}`, 540, 1310, `500 26px ${FB}`, SC.dim, 'center', 1000);
+  return { cv, c, q };
+}
+function statBox(c, x, y, w, label, value, color) {
+  sticker(c, x, y, w, 150, SC.card, 24);
+  c.fillStyle = color; c.fillRect(x + 24, y + 26, 10, 36);
+  cText(c, label, x + 46, y + 56, `700 28px ${FB}`, SC.dim, 'left', w - 60);
+  cText(c, value, x + 24, y + 124, `54px ${FD}`, SC.ink, 'left', w - 40);
+}
+const hm = (ms) => { const d = new Date(ms); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+// 하루 갓생 카드: 검증된 기록(모닝콜 받은 시각·타이머 완주) + 모험 일지
+async function dayCard() {
+  const q0 = Q(), d = parseYmd(q0.today);
+  const { cv, c, q } = await cardBase(`${nick()}의 갓생 일지`, `${d.getFullYear()}. ${d.getMonth() + 1}. ${d.getDate()}. ${WEEKDAY[d.getDay()]}요일`);
+  const list = q.quests.filter((x) => x.date === q.today), done = doneOn(q, q.today), hw = habitWeek(q);
+  statBox(c, 50, 340, 310, '오늘 완료', `${done.length} / ${list.length}`, SC.ok);
+  statBox(c, 385, 340, 310, '연속 기록', `${dayStreak(q)}일`, SC.str);
+  statBox(c, 720, 340, 310, `${hw.dead ? '보스 처치!' : '나쁜 습관 보스'}`, hw.dead ? '처치 완료' : `HP ${hw.left}/${hw.hp}`, SC.danger);
+  sticker(c, 50, 530, 980, 470, SC.card);
+  cText(c, '오늘의 인증 기록', 90, 595, `40px ${FD}`, SC.ink);
+  let y = 655;
+  if (!done.length) cText(c, '아직 완료한 루틴이 없어요. 첫 퀘스트부터 시작!', 90, y, `500 32px ${FB}`, SC.dim);
+  for (const x of done.slice(0, 5)) {
+    const r = routineOf(x.rid), col = r ? SC[r.stat] : SC.dim;
+    c.fillStyle = col; c.beginPath(); c.arc(102, y - 12, 12, 0, Math.PI * 2); c.fill();
+    cText(c, x.doneAt ? hm(x.doneAt) : '--:--', 130, y, `36px ${FD}`, SC.ink);
+    cText(c, `${r ? r.title : '루틴'}${x.goalId ? ` ${fmtAmt(x.done)}${x.unit}` : ''}`, 260, y, `700 32px ${FB}`, SC.ink, 'left', 730);
+    const proofs = [x.callAt ? `☎ 모닝콜 ${hm(x.callAt)} 받고 시작` : '', x.proof === 'timer' ? `⏱ 타이머 ${questTier(x).minutes}분 완주` : x.proof === 'hold' ? '✋ 꾹 눌러 인증' : ''].filter(Boolean).join('  ·  ');
+    if (proofs) cText(c, proofs, 260, y + 40, `500 26px ${FB}`, SC.ok, 'left', 730);
+    y += proofs ? 82 : 62;
+  }
+  if (done.length > 5) cText(c, `그 외 ${done.length - 5}개 더 완료`, 90, y, `500 28px ${FB}`, SC.dim);
+  sticker(c, 50, 1030, 980, 230, SC.card2);
+  cText(c, '오늘의 모험', 90, 1090, `36px ${FD}`, SC.ink);
+  const steps = stepsOn(q, q.today);
+  if (!steps.length) cText(c, '루틴을 끝내면 모험이 한 걸음씩 나아가요.', 90, 1150, `500 28px ${FB}`, SC.dim);
+  steps.slice(-3).forEach((st, k) => { const L = stepLine(q, st); cText(c, `${L.e} ${L.what}${L.gain ? ` (${L.gain})` : ''}`, 90, 1145 + k * 46, `500 28px ${FB}`, SC.ink, 'left', 900); });
+  return cv;
+}
+function periodRange(p, today) {
+  const d = parseYmd(today), y = d.getFullYear(), ws = weekStartOf(today);
+  if (p === 'week') return { from: ws, to: addDays(ws, 6), name: '이번 주' };
+  if (p === 'lastweek') return { from: addDays(ws, -7), to: addDays(ws, -1), name: '지난 주' };
+  if (p === 'month') return { from: today.slice(0, 8) + '01', to: addDays(ymd(new Date(y, d.getMonth() + 1, 1)), -1), name: `${d.getMonth() + 1}월` };
+  return { from: `${y}-01-01`, to: `${y}-12-31`, name: `${y}년` };
+}
+// 결산 카드 (Spotify Wrapped 방식)
+async function wrapCard(p) {
+  const q0 = Q(), pr = periodRange(p, q0.today), fmtD = (s) => `${+s.slice(5, 7)}.${+s.slice(8)}`;
+  const { cv, c, q } = await cardBase(`${nick()}의 ${pr.name} 갓생 결산`, `${fmtD(pr.from)} ~ ${fmtD(pr.to)}`);
+  const st = periodStats(q, pr.from, pr.to);
+  sticker(c, 50, 340, 980, 250, SC.acc);
+  cText(c, '완료한 루틴', 90, 410, `700 32px ${FB}`, SC.ink);
+  cText(c, `${fmt(st.done)}개`, 90, 530, `110px ${FD}`, SC.ink);
+  cText(c, `달성률 ${Math.round(st.rate * 100)}%`, 990, 530, `56px ${FD}`, SC.ink, 'right');
+  statBox(c, 50, 620, 475, '최장 연속', `${st.best}일`, SC.str);
+  statBox(c, 555, 620, 475, '모닝콜 받고 시작', `${st.called}번`, SC.int);
+  statBox(c, 50, 800, 475, '오전 9시 전 완료', `${st.early}번`, SC.vit);
+  statBox(c, 555, 800, 475, '나쁜 습관 보스 처치', `${st.kills}번`, SC.danger);
+  sticker(c, 50, 980, 980, 280, SC.card);
+  cText(c, st.top ? `가장 많이 한 루틴: ${st.top.title} ${st.top.n}번` : '이 기간에 완료한 루틴이 없어요', 90, 1045, `40px ${FD}`, SC.ink, 'left', 900);
+  const mx = Math.max(1, ...Object.values(st.perStat));
+  ['str', 'int', 'vit', 'dex'].forEach((k, i) => {
+    const y = 1085 + i * 40;
+    cText(c, STAT[k].name, 90, y + 26, `700 26px ${FB}`, SC.ink);
+    c.fillStyle = SC.soft; cPath(c, 190, y + 6, 700, 24, 12); c.fill();
+    if (st.perStat[k]) { c.fillStyle = SC[k]; cPath(c, 190, y + 6, Math.max(24, (700 * st.perStat[k]) / mx), 24, 12); c.fill(); }
+    cText(c, `${st.perStat[k]}`, 990, y + 27, `30px ${FD}`, SC.ink, 'right');
+  });
+  return cv;
+}
+// 공유: 안드로이드 앱은 네이티브 공유 시트, 웹은 Web Share(파일), 안 되면 이미지 저장
+async function shareCanvas(cv, name, text) {
+  const url = cv.toDataURL('image/png');
+  if (NATIVE && QA && QA.shareImage) { await QA.shareImage({ data: url.split(',')[1], name, text }); return 'shared'; }
+  const blob = await new Promise((r) => cv.toBlob(r, 'image/png'));
+  const file = blob && new File([blob], name, { type: 'image/png' });
+  if (file && navigator.canShare && navigator.canShare({ files: [file] })) {
+    try { await navigator.share({ files: [file], text }); return 'shared'; } catch (e) { if (e && e.name === 'AbortError') return 'cancel'; }
+  }
+  const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  return 'saved';
+}
+let shareCv = null, shareMeta = null;
+async function openShare(kind, p) {
+  openModal('<div class="big">카드를 만드는 중…</div><div class="sub">잠깐만요</div>');
+  try {
+    shareCv = kind === 'day' ? await dayCard() : await wrapCard(p);
+    const q = Q(), pr = kind === 'day' ? null : periodRange(p, q.today);
+    shareMeta = kind === 'day'
+      ? { name: `questcall-${q.today}.png`, text: `${nick()}의 오늘 갓생: 루틴 ${doneOn(q, q.today).length}개 완료! #퀘스트콜` }
+      : { name: `questcall-${p}-${q.today}.png`, text: `${nick()}의 ${pr.name} 갓생 결산 #퀘스트콜` };
+    openModal(`<div class="big">${kind === 'day' ? '오늘의 갓생 카드' : '갓생 결산 카드'}</div>
+      <img class="sharepic" src="${shareCv.toDataURL('image/png')}" alt="${esc(shareMeta.text)}">
+      <button class="btn pri" data-life="share">${NATIVE ? '공유하기' : '공유하기 / 저장'}</button><button class="btn ghost" data-qact="closeexec">닫기</button>
+      <div class="sub">이미지를 단톡방이나 SNS에 올려 보세요. 카카오톡 피드 카드(링크 미리보기)는 카카오 앱 키를 등록한 뒤에 붙일게요.</div>`);
+  } catch (e) { openModal(`<div class="big">카드를 만들지 못했어요</div><div class="sub">${esc(e && e.message || e)}</div><button class="btn" data-qact="closeexec">닫기</button>`); }
+}
+
+// ===== 이벤트 =====
+document.addEventListener('click', async (ev) => {
+  const el = ev.target.closest('[data-life]'); if (!el) return;
+  const d = el.dataset, q = Q();
+  if (d.life === 'step') openStep();
+  else if (d.life === 'pick') pickStep(+d.k);
+  else if (d.life === 'pack') openPack(d.b);
+  else if (d.life === 'vault') claimVault();
+  else if (d.life === 'equip') {
+    const c = cardOf(d.id); if (!c || !q.cards[c.id]) return;
+    const key = c.kind === 'pet' ? 'pet' : 'title';
+    q[key] = q[key] === c.id ? null : c.id; save(); render();
+    toast(q[key] ? `${c.e} ${c.name}${c.kind === 'pet' ? '와(과) 함께 다녀요' : ' 칭호를 달았어요'}` : `${c.name}을(를) 내려놨어요`);
+  }
+  else if (d.life === 'daycard') openShare('day');
+  else if (d.life === 'wrap') openShare('wrap', d.p);
+  else if (d.life === 'share' && shareCv) {
+    el.disabled = true;
+    try { const r = await shareCanvas(shareCv, shareMeta.name, shareMeta.text); if (r === 'saved') toast('이미지를 저장했어요'); }
+    catch (e) { toast('공유하지 못했어요: ' + (e && e.message || e)); }
+    el.disabled = false;
+  }
+});
+
 
 // ===== 이벤트 =====
 document.addEventListener('click', (ev) => {
@@ -2739,7 +3214,7 @@ window.claude?.hot?.ready ? window.claude.hot.ready(start) : start(window.claude
 
 <script>
 if ('serviceWorker' in navigator && location.protocol === 'https:' && !(window.Capacitor && Capacitor.isNativePlatform && Capacitor.isNativePlatform())) {
-  navigator.serviceWorker.register('sw.js?v=13f89dc736').catch(function () {});
+  navigator.serviceWorker.register('sw.js?v=de6f729322').catch(function () {});
 }
 </script>
 </body></html>
